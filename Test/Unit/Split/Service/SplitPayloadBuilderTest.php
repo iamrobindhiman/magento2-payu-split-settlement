@@ -30,10 +30,10 @@ class SplitPayloadBuilderTest extends TestCase
 
     public function testBuildsAbsoluteSplitWithVendorAndPlatformSegments(): void
     {
-        // Order 000000045 paid ₹799.20: vendor 12 earns ₹719.28, platform keeps ₹79.92 (E-05 shape).
+        // Order 000000045 paid ₹799.20: vendor 12 earns ₹679.32, platform keeps ₹119.88 (E-05 shape).
         $result = new SplitResult(
-            [12 => Money::fromPaise(71928)],
-            Money::fromPaise(7992),
+            [12 => Money::fromPaise(67932)],
+            Money::fromPaise(11988),
             Money::fromPaise(79920)
         );
         $plan = new OrderSplitPlan(45, '000000045', $result, [12 => 'CHLD01']);
@@ -46,11 +46,11 @@ class SplitPayloadBuilderTest extends TestCase
         $this->assertSame('100000000000000002', $decoded['payuId']);
 
         // Vendor segment keyed by its PayU child merchant key.
-        $this->assertSame('719.28', $decoded['splitInfo']['CHLD01']['aggregatorSubAmt']);
+        $this->assertSame('679.32', $decoded['splitInfo']['CHLD01']['aggregatorSubAmt']);
         $this->assertSame('000000045-12', $decoded['splitInfo']['CHLD01']['aggregatorSubTxnId']);
 
         // Platform segment keyed by the parent (aggregator) key → PayU labels it "commission".
-        $this->assertSame('79.92', $decoded['splitInfo']['PRNT01']['aggregatorSubAmt']);
+        $this->assertSame('119.88', $decoded['splitInfo']['PRNT01']['aggregatorSubAmt']);
         $this->assertSame('000000045-PLATFORM', $decoded['splitInfo']['PRNT01']['aggregatorSubTxnId']);
     }
 

@@ -40,8 +40,8 @@ class SettlementReadbackReaderTest extends TestCase
                 [
                     'mihpayid' => '100000000000000001',
                     'splitInfo' => [
-                        'CHLD01' => ['splitAmount' => '719.28', 'settledAmount' => '709.28'],
-                        'PRNT01' => ['splitAmount' => '79.92', 'settledAmount' => '79.92'],
+                        'CHLD01' => ['splitAmount' => '679.32', 'settledAmount' => '669.32'],
+                        'PRNT01' => ['splitAmount' => '119.88', 'settledAmount' => '119.88'],
                     ],
                 ],
             ],
@@ -50,7 +50,7 @@ class SettlementReadbackReaderTest extends TestCase
         $result = $this->reader->read($this->response($raw), '100000000000000001', 'CHLD01');
 
         $this->assertTrue($result->hasSettlementSignal);
-        $this->assertSame(70928, $result->settledPaise);
+        $this->assertSame(66932, $result->settledPaise);
     }
 
     public function testAllocationOnlyIsNotASettlementSignal(): void
@@ -60,7 +60,7 @@ class SettlementReadbackReaderTest extends TestCase
             [
                 'mihpayid' => '100000000000000001',
                 'splitInfo' => [
-                    'CHLD01' => ['splitAmount' => '719.28'],
+                    'CHLD01' => ['splitAmount' => '679.32'],
                 ],
             ],
         ];
@@ -82,7 +82,7 @@ class SettlementReadbackReaderTest extends TestCase
 
     public function testUnmatchedTransactionYieldsNotFound(): void
     {
-        $raw = [['mihpayid' => 'SOME_OTHER_TXN', 'splitInfo' => ['CHLD01' => ['settledAmount' => '709.28']]]];
+        $raw = [['mihpayid' => 'SOME_OTHER_TXN', 'splitInfo' => ['CHLD01' => ['settledAmount' => '669.32']]]];
 
         $result = $this->reader->read($this->response($raw), '100000000000000001', 'CHLD01');
 
@@ -91,7 +91,7 @@ class SettlementReadbackReaderTest extends TestCase
 
     public function testUnmatchedChildKeyYieldsNotFound(): void
     {
-        $raw = [['mihpayid' => 'TXN1', 'splitInfo' => ['OTHERCHILD' => ['settledAmount' => '709.28']]]];
+        $raw = [['mihpayid' => 'TXN1', 'splitInfo' => ['OTHERCHILD' => ['settledAmount' => '669.32']]]];
 
         $result = $this->reader->read($this->response($raw), 'TXN1', 'CHLD01');
 

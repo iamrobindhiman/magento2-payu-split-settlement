@@ -74,8 +74,8 @@ class PayuSplitClientTest extends TestCase
     private function makePlan(): OrderSplitPlan
     {
         $result = new SplitResult(
-            [12 => Money::fromPaise(71928)],
-            Money::fromPaise(7992),
+            [12 => Money::fromPaise(67932)],
+            Money::fromPaise(11988),
             Money::fromPaise(79920)
         );
         return new OrderSplitPlan(45, '000000045', $result, [12 => 'CHLD01']);

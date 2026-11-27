@@ -102,7 +102,7 @@ class WebkulSettlementSyncTest extends TestCase
             'order_id' => 42,
             'seller_id' => 18,
             'segment_type' => SplitSegment::TYPE_VENDOR,
-            'released_paise' => 70928,
+            'released_paise' => 66932,
             'state' => SplitSegment::STATE_RELEASED,
             'webkul_synced_at' => null,
         ], $data);
@@ -155,12 +155,12 @@ class WebkulSettlementSyncTest extends TestCase
     public function testHappyPathMirrorsReleaseIntoWebkulLedger(): void
     {
         [$sync, $deps] = $this->make();
-        $segment = $this->segment(['released_paise' => 70928]); // ₹709.28
+        $segment = $this->segment(['released_paise' => 66932]); // ₹669.32
         $deps['repository']->method('getByOrderId')->with(42)->willReturn($this->header());
 
         // sellertransaction: created, saved, id read back = 99.
         $sellerTrans = $this->createMock(Sellertransaction::class);
-        $sellerTrans->expects($this->once())->method('setTransactionAmount')->with(709.28);
+        $sellerTrans->expects($this->once())->method('setTransactionAmount')->with(669.32);
         $sellerTrans->expects($this->once())->method('setTransactionId')->with('payu-100000000000000001-18');
         $sellerTrans->method('getId')->willReturn(99);
         $deps['sellertransactionFactory']->method('create')->willReturn($sellerTrans);
@@ -184,7 +184,7 @@ class WebkulSettlementSyncTest extends TestCase
         $balanceRow = $this->createMock(SaleperpartnerModel::class);
         $balanceRow->method('getAmountRemain')->willReturn(1000.0);
         $balanceRow->method('getAmountReceived')->willReturn(500.0);
-        $balanceRow->expects($this->once())->method('setLastAmountPaid')->with(709.28);
+        $balanceRow->expects($this->once())->method('setLastAmountPaid')->with(669.32);
         $balanceRow->expects($this->once())->method('setAmountReceived')->with(1209.28);
         $balanceRow->expects($this->once())->method('setAmountRemain')->with(290.72);
         $deps['saleperpartnerFactory']->method('create')->willReturn($balanceRow);
@@ -209,7 +209,7 @@ class WebkulSettlementSyncTest extends TestCase
     public function testAmountRemainNeverGoesNegative(): void
     {
         [$sync, $deps] = $this->make();
-        $segment = $this->segment(['released_paise' => 70928]); // net 709.28
+        $segment = $this->segment(['released_paise' => 66932]); // net 669.32
         $deps['repository']->method('getByOrderId')->willReturn($this->header());
 
         $sellerTrans = $this->createMock(Sellertransaction::class);
@@ -221,11 +221,11 @@ class WebkulSettlementSyncTest extends TestCase
         $existing->method('getId')->willReturn(5);
         $this->stubSaleperpartnerCollection($deps['saleperpartnerCollectionFactory'], [$existing]);
         $balanceRow = $this->createMock(SaleperpartnerModel::class);
-        $balanceRow->method('getAmountRemain')->willReturn(100.0); // < net 709.28
+        $balanceRow->method('getAmountRemain')->willReturn(100.0); // < net 669.32
         $balanceRow->method('getAmountReceived')->willReturn(0.0);
         // remain floors at 0, never negative (Webkul's guard).
         $balanceRow->expects($this->once())->method('setAmountRemain')->with(0.0);
-        $balanceRow->expects($this->once())->method('setAmountReceived')->with(709.28);
+        $balanceRow->expects($this->once())->method('setAmountReceived')->with(669.32);
         $deps['saleperpartnerFactory']->method('create')->willReturn($balanceRow);
 
         $deps['connection']->method('update')->willReturn(1); // CAS claim wins

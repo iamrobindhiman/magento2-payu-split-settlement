@@ -103,7 +103,7 @@ class ReleaseReconcilerTest extends TestCase
             'order_id' => 42,
             'seller_id' => 18,
             'segment_type' => SplitSegment::TYPE_VENDOR,
-            'amount_paise' => 71928,
+            'amount_paise' => 67932,
             'refunded_paise' => 0,
             'child_merchant_key' => 'CHLD01',
             'state' => SplitSegment::STATE_RELEASE_REQUESTED,
@@ -134,18 +134,18 @@ class ReleaseReconcilerTest extends TestCase
     public function testMatchingReadbackReleasesAndDispatchesEvent(): void
     {
         [$reconciler, $deps] = $this->make();
-        $segment = $this->segment(['amount_paise' => 71928, 'refunded_paise' => 1000]);
+        $segment = $this->segment(['amount_paise' => 67932, 'refunded_paise' => 1000]);
         $deps['repository']->method('getByOrderId')->with(42)->willReturn($this->header());
         $deps['holdLoader']->method('holdTypes')->willReturn([]);
         $deps['gateway']->method('getAggregatorTransactions')->willReturn($this->emptyResponse());
-        // expected net = 71928 - 1000 = 70928
-        $deps['readbackReader']->method('read')->willReturn(SettlementReadbackResult::found(70928));
+        // expected net = 67932 - 1000 = 66932
+        $deps['readbackReader']->method('read')->willReturn(SettlementReadbackResult::found(66932));
 
         $deps['connection']->expects($this->once())->method('update')
             ->with(
                 'rkd_payu_split_segment',
                 $this->callback(fn($bind) => $bind['state'] === SplitSegment::STATE_RELEASED
-                    && $bind['released_paise'] === 70928),
+                    && $bind['released_paise'] === 66932),
                 $this->callback(fn($where) => (int) $where['segment_id = ?'] === 7
                     && $where['state = ?'] === SplitSegment::STATE_RELEASE_REQUESTED)
             )
@@ -157,13 +157,13 @@ class ReleaseReconcilerTest extends TestCase
         $reconciler->reconcile($segment);
 
         $this->assertSame(SplitSegment::STATE_RELEASED, $segment->getState());
-        $this->assertSame(70928, (int) $segment->getData('released_paise'));
+        $this->assertSame(66932, (int) $segment->getData('released_paise'));
     }
 
     public function testMismatchFreezesAndNeverReleases(): void
     {
         [$reconciler, $deps] = $this->make();
-        $segment = $this->segment(['amount_paise' => 71928, 'refunded_paise' => 0]); // expect 71928
+        $segment = $this->segment(['amount_paise' => 67932, 'refunded_paise' => 0]); // expect 67932
         $deps['repository']->method('getByOrderId')->willReturn($this->header());
         $deps['holdLoader']->method('holdTypes')->willReturn([]);
         $deps['gateway']->method('getAggregatorTransactions')->willReturn($this->emptyResponse());
@@ -224,7 +224,7 @@ class ReleaseReconcilerTest extends TestCase
         $deps['repository']->method('getByOrderId')->willReturn($this->header());
         $deps['holdLoader']->method('holdTypes')->willReturn([]);
         $deps['gateway']->method('getAggregatorTransactions')->willReturn($this->emptyResponse());
-        $deps['readbackReader']->method('read')->willReturn(SettlementReadbackResult::found(71928));
+        $deps['readbackReader']->method('read')->willReturn(SettlementReadbackResult::found(67932));
         // CAS affects 0 rows: a concurrent recon already promoted it.
         $deps['connection']->method('update')->willReturn(0);
 
@@ -317,14 +317,14 @@ class ReleaseReconcilerTest extends TestCase
             'segment_id' => 3,
             'seller_id' => 0,
             'segment_type' => SplitSegment::TYPE_COMMISSION,
-            'amount_paise' => 7992,
+            'amount_paise' => 11988,
             'refunded_paise' => 0,
             'child_merchant_key' => 'PRNT01',
         ]);
         $deps['repository']->method('getByOrderId')->willReturn($this->header());
         $deps['holdLoader']->method('holdTypes')->willReturn([]);
         $deps['gateway']->method('getAggregatorTransactions')->willReturn($this->emptyResponse());
-        $deps['readbackReader']->method('read')->willReturn(SettlementReadbackResult::found(7992));
+        $deps['readbackReader']->method('read')->willReturn(SettlementReadbackResult::found(11988));
         $deps['connection']->method('update')->willReturn(1);
 
         $deps['eventManager']->expects($this->once())->method('dispatch')
