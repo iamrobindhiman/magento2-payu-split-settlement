@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <rkd_payu>
+            <diagnostic>
+                <log_enabled>1</log_enabled>
+                <redact_pii>0</redact_pii>
+            </diagnostic>
+            <split>
+                <ceiling_days>25</ceiling_days>
+                <alert_days>23</alert_days>
+                <scan_batch_size>200</scan_batch_size>
+                <enable_rearm_refund>0</enable_rearm_refund>
+                <enable_clear_hold>0</enable_clear_hold>
+                <release_enabled>0</release_enabled>
+            </split>
+            <onboarding>
+                <!-- N-6: ships dark. Nothing fires until this is deliberately switched on. -->
+                <enabled>0</enabled>
+            </onboarding>
+        </rkd_payu>
+    </default>
+</config>

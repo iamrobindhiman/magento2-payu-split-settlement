@@ -1,0 +1,271 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Split (Slice A2): seller -> PayU sub-merchant mapping repository. -->
+    <preference for="RKD\PayuSplit\Split\Api\SubmerchantRepositoryInterface"
+                type="RKD\PayuSplit\Split\Model\SubmerchantRepository"/>
+
+    <!-- Split (Slice A4): per-order split lifecycle header repository. -->
+    <preference for="RKD\PayuSplit\Split\Api\SplitOrderRepositoryInterface"
+                type="RKD\PayuSplit\Split\Model\SplitOrderRepository"/>
+
+    <!-- Slice A4: record-on-pay manager + observer log to the dedicated payu channel. -->
+    <type name="RKD\PayuSplit\Split\Service\SplitOrderManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Observer\RecordSplitOnPay">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Slice A5a: split-trigger scan + requester log to the dedicated payu channel. -->
+    <type name="RKD\PayuSplit\Split\Service\SplitRequester">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\SplitTriggerScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Slice A5b: refund executor + its scan log to the dedicated payu channel. -->
+    <type name="RKD\PayuSplit\Split\Service\RefundExecutor">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\RefundExecutorScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <!-- Gate item #6: refund-status reconciler + its scan log to the dedicated payu channel. -->
+    <type name="RKD\PayuSplit\Split\Service\RefundReconciler">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\RefundReconScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\DeliveryPollScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Slice A5c: release executor + readback recon log to the dedicated payu channel. -->
+    <type name="RKD\PayuSplit\Split\Service\ReleaseProcessor">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\ReleaseExecutorScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Service\ReleaseReconciler">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\ReleaseReconScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Slice A5c-4: Webkul ledger mirror + its reconcile scan + the release-event observer. -->
+    <type name="RKD\PayuSplit\Split\Service\WebkulSettlementSync">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Observer\MirrorReleasedSegment">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\WebkulSyncReconScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Gate blocker #4: Webkul refund-close + its event observer + its reconcile scan log to the
+         dedicated payu channel. -->
+    <type name="RKD\PayuSplit\Split\Service\WebkulRefundCloser">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Observer\CloseRefundedSegmentLedger">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Split\Cron\WebkulRefundCloseReconScan">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Slice A7-3: break-glass action controllers log to the dedicated payu channel. -->
+    <type name="RKD\PayuSplit\Controller\Adminhtml\Settlement\RetrySplit">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="RKD\PayuSplit\Controller\Adminhtml\Settlement\RearmRefund">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!--
+        Dedicated Monolog channel: var/log/payu.log.
+        Same file the upstream module dumps to via Zend_Log_Writer_Stream — our
+        structured entries appear inline with the legacy noise so a single tail
+        covers everything during diagnosis.
+    -->
+    <type name="RKD\PayuSplit\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">rkd_payu</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">RKD\PayuSplit\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!--
+        PayloadRedactor needs to know whether we are in PII-redaction mode.
+        Wire a virtual type per env: RKD_PayuSplit_PayloadRedactor reads the live config
+        flag at construction. Each consumer gets the same virtual instance via DI.
+    -->
+    <virtualType name="RKD\PayuSplit\Diagnostic\Util\PayloadRedactor\Local"
+                 type="RKD\PayuSplit\Diagnostic\Util\PayloadRedactor">
+        <arguments>
+            <argument name="prodMode" xsi:type="boolean">false</argument>
+        </arguments>
+    </virtualType>
+
+    <!--
+        Diagnostic observers + plugins all share the dedicated logger channel.
+    -->
+    <type name="RKD\PayuSplit\Diagnostic\Observer\ResponsePredispatch">
+        <arguments>
+            <argument name="redactor" xsi:type="object">RKD\PayuSplit\Diagnostic\Util\PayloadRedactor\Local</argument>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="RKD\PayuSplit\Diagnostic\Observer\ResponsePostdispatch">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="RKD\PayuSplit\Diagnostic\Plugin\ValidateResponsePlugin">
+        <arguments>
+            <argument name="redactor" xsi:type="object">RKD\PayuSplit\Diagnostic\Util\PayloadRedactor\Local</argument>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="RKD\PayuSplit\Diagnostic\Plugin\PostProcessingPlugin">
+        <arguments>
+            <argument name="redactor" xsi:type="object">RKD\PayuSplit\Diagnostic\Util\PayloadRedactor\Local</argument>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="RKD\PayuSplit\Diagnostic\Plugin\VerifyPaymentPlugin">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!--
+        Phase 1.5 — Split-aware response validation.
+        Intercepts validateResponse only when the payload carries `splitInfo`
+        (PayU adds this whenever the merchant has split-settlement enabled).
+        Recomputes the hash with PayU's documented split formula since the
+        upstream module is unaware of it. See Service\ResponseHashCalculator.
+
+        Logger injection satisfies the CodingStandardsGuardTest "every plugin
+        declares LoggerInterface" rule. Actual logging is owned by the
+        diagnostic ValidateResponsePlugin (the OUTER wrapper) so each
+        validation produces exactly one log entry.
+    -->
+    <type name="RKD\PayuSplit\Split\Plugin\ResponseHashPlugin">
+        <arguments>
+            <argument name="logger" xsi:type="object">RKD\PayuSplit\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!--
+        Around-plugins on the upstream PayU model.
+
+        Plugin ordering (Magento around-plugin semantics):
+          - LOWER sortOrder = OUTER wrapper (called first, proceed cascades inward)
+          - HIGHER sortOrder = INNER (closest to the actual upstream method)
+
+        For validateResponse:
+          1. rkd_payu_diagnostic_validate_response (sortOrder 10) — outer wrapper.
+             Computes diagnostic hash, logs every call (success/failure/exception).
+          2. rkd_payu_split_response_hash         (sortOrder 20) — inner. Intercepts
+             when splitInfo present; bypasses upstream's broken classic-formula path.
+
+        Runtime trace for a split-enabled response:
+          diagnostic.aroundValidateResponse
+            → proceed → split.aroundValidateResponse
+              → splitInfo present → recompute with split formula → return bool
+            ← split returns
+          diagnostic logs result + computed/received prefixes
+    -->
+    <type name="PayUIndia\Payu\Model\Payu">
+        <plugin name="rkd_payu_diagnostic_validate_response"
+                type="RKD\PayuSplit\Diagnostic\Plugin\ValidateResponsePlugin"
+                sortOrder="10"/>
+        <plugin name="rkd_payu_split_response_hash"
+                type="RKD\PayuSplit\Split\Plugin\ResponseHashPlugin"
+                sortOrder="20"/>
+        <plugin name="rkd_payu_diagnostic_post_processing"
+                type="RKD\PayuSplit\Diagnostic\Plugin\PostProcessingPlugin"
+                sortOrder="10"/>
+        <plugin name="rkd_payu_diagnostic_verify_payment"
+                type="RKD\PayuSplit\Diagnostic\Plugin\VerifyPaymentPlugin"
+                sortOrder="10"/>
+    </type>
+
+    <!--
+        A5c-4b — INV-17 anti-double-pay suppressor. Webkul has NO shared seller-payout choke-point
+        (each path writes inline), so all three pay paths are plugged separately. Each around-plugin
+        blocks a manual Webkul "Pay Seller" when PayU split-settlement manages that vendor (a DONE
+        split + a vendor segment), failing CLOSED on any read error. Defence-in-depth before the
+        A5c-4a mirror flips the saleslist rows paid_status=1. Self-gating: a no-op wherever no split
+        data exists (e.g. production before split goes live).
+    -->
+    <type name="Webkul\Marketplace\Controller\Adminhtml\Order\Payseller">
+        <plugin name="rkd_payu_suppress_webkul_payseller"
+                type="RKD\PayuSplit\Split\Plugin\SuppressWebkulPaysellerPlugin"/>
+    </type>
+    <type name="Webkul\Marketplace\Controller\Adminhtml\Order\MassPayseller">
+        <plugin name="rkd_payu_suppress_webkul_mass_payseller"
+                type="RKD\PayuSplit\Split\Plugin\SuppressWebkulMassPaysellerPlugin"/>
+    </type>
+    <type name="Webkul\Marketplace\Helper\Orders">
+        <plugin name="rkd_payu_suppress_webkul_helper_payseller"
+                type="RKD\PayuSplit\Split\Plugin\SuppressWebkulHelperPaysellerPlugin"/>
+    </type>
+
+</config>

@@ -1,0 +1,179 @@
+{
+    "rkd_payu_audit_log": {
+        "column": {
+            "action": true,
+            "admin_user_id": true,
+            "admin_user_name": true,
+            "after_state": true,
+            "before_state": true,
+            "created_at": true,
+            "entity_id": true,
+            "entity_ref_id": true,
+            "entity_type": true,
+            "note": true,
+            "order_id": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        },
+        "index": {
+            "RKD_PAYU_AUDIT_LOG_ENTITY_TYPE_ENTITY_REF_ID": true,
+            "RKD_PAYU_AUDIT_LOG_ORDER_ID": true
+        }
+    },
+    "rkd_payu_refund": {
+        "column": {
+            "aggregator_paise": true,
+            "amount_paise": true,
+            "created_at": true,
+            "order_id": true,
+            "payu_request_id": true,
+            "reason": true,
+            "refund_id": true,
+            "segment_id": true,
+            "state": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "RKD_PAYU_REFUND_SEGMENT_ID_RKD_PAYU_SPLIT_SEGMENT_SEGMENT_ID": true,
+            "RKD_PAYU_REFUND_SEGMENT_ID_PAYU_REQUEST_ID": true,
+            "PRIMARY": true
+        },
+        "index": {
+            "RKD_PAYU_REFUND_SEGMENT_ID": true,
+            "RKD_PAYU_REFUND_STATE": true
+        }
+    },
+    "rkd_payu_segment_hold": {
+        "column": {
+            "created_at": true,
+            "hold_id": true,
+            "hold_type": true,
+            "note": true,
+            "segment_id": true
+        },
+        "constraint": {
+            "RKD_PAYU_SEGMENT_HOLD_SEGMENT_ID_HOLD_TYPE": true,
+            "FK_303C845F11BD8BB45777A7B0CF76DA4B": true,
+            "PRIMARY": true
+        }
+    },
+    "rkd_payu_segment_item": {
+        "column": {
+            "awb": true,
+            "created_at": true,
+            "delivered_at": true,
+            "item_amount_paise": true,
+            "item_commission_paise": true,
+            "item_row_id": true,
+            "mageproduct_id": true,
+            "order_item_id": true,
+            "qty": true,
+            "refunded_paise": true,
+            "replacement_of_item_row_id": true,
+            "return_opened_at": true,
+            "return_state": true,
+            "segment_id": true,
+            "shipment_id": true,
+            "updated_at": true,
+            "window_closes_at": true
+        },
+        "constraint": {
+            "FK_835E5E29A32AD2645CCA679943E3E6A0": true,
+            "PRIMARY": true
+        },
+        "index": {
+            "RKD_PAYU_SEGMENT_ITEM_AWB": true,
+            "RKD_PAYU_SEGMENT_ITEM_ORDER_ITEM_ID": true,
+            "RKD_PAYU_SEGMENT_ITEM_SEGMENT_ID": true
+        }
+    },
+    "rkd_payu_split": {
+        "column": {
+            "created_at": true,
+            "entity_id": true,
+            "last_error": true,
+            "mihpayid": true,
+            "order_id": true,
+            "order_increment_id": true,
+            "paid_at": true,
+            "payu_split_response": true,
+            "shipping_paise": true,
+            "split_done_at": true,
+            "split_requested_at": true,
+            "split_state": true,
+            "split_trigger": true,
+            "txn_amount_paise": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "RKD_PAYU_SPLIT_ORDER_ID": true,
+            "PRIMARY": true
+        },
+        "index": {
+            "RKD_PAYU_SPLIT_SPLIT_STATE": true
+        }
+    },
+    "rkd_payu_split_segment": {
+        "column": {
+            "amount_paise": true,
+            "child_merchant_key": true,
+            "child_mid": true,
+            "created_at": true,
+            "delivered_at": true,
+            "intent_token": true,
+            "last_error": true,
+            "order_id": true,
+            "refund_attempts": true,
+            "refunded_paise": true,
+            "release_attempts": true,
+            "release_requested_at": true,
+            "released_at": true,
+            "released_paise": true,
+            "segment_id": true,
+            "segment_type": true,
+            "seller_id": true,
+            "split_id": true,
+            "state": true,
+            "updated_at": true,
+            "webkul_synced_at": true,
+            "window_closes_at": true
+        },
+        "constraint": {
+            "RKD_PAYU_SPLIT_SEGMENT_ORDER_ID_SELLER_ID": true,
+            "RKD_PAYU_SPLIT_SEGMENT_SPLIT_ID_RKD_PAYU_SPLIT_ENTITY_ID": true,
+            "PRIMARY": true
+        },
+        "index": {
+            "RKD_PAYU_SPLIT_SEGMENT_SELLER_ID": true,
+            "RKD_PAYU_SPLIT_SEGMENT_STATE": true
+        }
+    },
+    "rkd_payu_submerchant": {
+        "column": {
+            "activated_at": true,
+            "attempts": true,
+            "created_at": true,
+            "entity_id": true,
+            "esign_sent_at": true,
+            "esign_sent_by": true,
+            "is_active": true,
+            "kyc_status": true,
+            "last_attempt_at": true,
+            "last_error": true,
+            "onboarding_state": true,
+            "payu_merchant_key": true,
+            "payu_mid": true,
+            "payu_uuid": true,
+            "seller_id": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "RKD_PAYU_SUBMERCHANT_SELLER_ID": true,
+            "PRIMARY": true
+        },
+        "index": {
+            "RKD_PAYU_SUBMERCHANT_ONBOARDING_STATE": true
+        }
+    }
+}

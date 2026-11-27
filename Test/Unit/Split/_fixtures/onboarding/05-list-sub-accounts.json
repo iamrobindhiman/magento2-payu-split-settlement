@@ -1,0 +1,64 @@
+{
+    "when": "2026-09-10T14:42:08+00:00",
+    "label": "05-list-sub-accounts",
+    "request": {
+        "parent_mid": "<parent>",
+        "scope": "fetch_child_merchants"
+    },
+    "http": 200,
+    "body": {
+        "child_merchants": {
+            "product_accounts": [
+                {
+                    "uuid": "0000-0000-00000001-0000-000000000001",
+                    "created_at": "2026-09-10T14:41:41.000Z",
+                    "name": "S2 Fixture Vendor 260910144139",
+                    "mid": 9000002,
+                    "email": "s2-fixture-260910144139@example.invalid",
+                    "onboarding_completed": true,
+                    "merchant_defined_identifier": null,
+                    "product_account_detail": {
+                        "pg_key": "CHLD02"
+                    }
+                },
+                {
+                    "uuid": "0000-0000-00000003-0000-000000000003",
+                    "created_at": "2026-09-09T14:19:58.000Z",
+                    "name": "ZZ Timing Probe 260909194956",
+                    "mid": 9000003,
+                    "email": "timing-260909194956@example.invalid",
+                    "onboarding_completed": true,
+                    "merchant_defined_identifier": null,
+                    "product_account_detail": {
+                        "pg_key": "CHLD03"
+                    }
+                },
+                {
+                    "uuid": "0000-0000-00000004-0000-000000000004",
+                    "created_at": "2026-09-09T12:16:24.000Z",
+                    "name": "EXAMPLE Test Vendor 260909174623",
+                    "mid": 9000004,
+                    "email": "vendor-260909174623@example.invalid",
+                    "onboarding_completed": true,
+                    "merchant_defined_identifier": null,
+                    "product_account_detail": {
+                        "pg_key": "CHLD04"
+                    }
+                },
+                {
+                    "uuid": "0000-0000-00000005-0000-000000000005",
+                    "created_at": "2026-06-08T07:51:14.000Z",
+                    "name": null,
+                    "mid": 9000001,
+                    "email": "owner@example.com",
+                    "onboarding_completed": true,
+                    "merchant_defined_identifier": null,
+                    "product_account_detail": {
+                        "pg_key": "CHLD01"
+                    }
+                }
+            ]
+        },
+        "total_childs": 4
+    }
+}

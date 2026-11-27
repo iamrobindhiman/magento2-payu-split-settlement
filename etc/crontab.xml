@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <!--
+            A5a — split-trigger scan. Fires payment_split for each order at the
+            earliest of its trigger conditions (all vendors shipped-or-cancelled, or
+            the T+N-day ceiling). Idempotent and per-order isolated, so a frequent
+            run is safe; every 15 minutes keeps the split prompt after a ship event
+            without hammering the gateway.
+        -->
+        <job name="rkd_payu_split_trigger_scan"
+             instance="RKD\PayuSplit\Split\Cron\SplitTriggerScan"
+             method="execute">
+            <schedule>*/15 * * * *</schedule>
+        </job>
+        <!--
+            A5b — refund executor scan. Issues customer refunds (var8) for cancelled
+            vendor segments on already-split orders. Idempotent (ledger-presence guard +
+            write-ahead token) and per-segment isolated, so a frequent run is safe; every
+            15 minutes keeps refunds prompt after a cancel (a CPA 2019 / RBI PA timeline
+            concern). Offset by 5 minutes from the split scan so a cancel-driven split has
+            landed before the refund scan looks for it.
+        -->
+        <job name="rkd_payu_refund_executor_scan"
+             instance="RKD\PayuSplit\Split\Cron\RefundExecutorScan"
+             method="execute">
+            <schedule>5,20,35,50 * * * *</schedule>
+        </job>
+        <!--
+            A6 — per-vendor delivery poll. For each undelivered vendor segment on an
+            already-split order, asks Shiprocket whether that seller's shipment is delivered
+            and stamps delivered_at + the return-window close on the segment's items, so A5c's
+            per-vendor eligibility can fire independently (the S-19 deadlock fix). Write-once
+            stamping + per-candidate isolation make a frequent run safe. Offset +10 minutes
+            from the split scan so a fresh split has landed before the poll looks for it.
+        -->
+        <job name="rkd_payu_delivery_poll_scan"
+             instance="RKD\PayuSplit\Split\Cron\DeliveryPollScan"
+             method="execute">
+            <schedule>10,25,40,55 * * * *</schedule>
+        </job>
+        <!--
+            A5c-3 — release executor scan. For each release-eligible segment (vendor: delivered +
+            window cleared; parent: parent-last), fires release_settlement once via the
+            ReleaseProcessor CAS (ELIGIBLE -> RELEASE_REQUESTED). Offset +3 from the split scan.
+            GATED by rkd_payu/split/release_enabled (default OFF) — release is PROD-VERIFY only
+            (E-07 -> O-11), so this scan no-ops until the switch is enabled.
+        -->
+        <job name="rkd_payu_release_executor_scan"
+             instance="RKD\PayuSplit\Split\Cron\ReleaseExecutorScan"
+             method="execute">
+            <schedule>3,18,33,48 * * * *</schedule>
+        </job>
+        <!--
+            A5c-5 — release readback reconciliation. For each segment left in RELEASE_REQUESTED by
+            the release executor, reads the settled amount back from PayU (get_aggregator_transactions)
+            and promotes RELEASE_REQUESTED -> RELEASED (INV-18) or freezes a mismatch. Settlement is
+            async (T+1) so frequency is not critical; offset +12 from the split scan to interleave
+            with the other scans. GATED by rkd_payu/split/release_enabled (default OFF) — release is
+            PROD-VERIFY only (E-07 -> O-11), so this scan no-ops until the switch is enabled.
+        -->
+        <job name="rkd_payu_release_recon_scan"
+             instance="RKD\PayuSplit\Split\Cron\ReleaseReconScan"
+             method="execute">
+            <schedule>12,27,42,57 * * * *</schedule>
+        </job>
+        <!--
+            A5c-4 — Webkul ledger-mirror reconcile (self-heal backstop). Re-drives WebkulSettlementSync
+            for any RELEASED segment whose mirror event was lost (webkul_synced_at IS NULL). Idempotent
+            + per-segment isolated. Offset +6 from the split scan. GATED by rkd_payu/split/release_enabled
+            (default OFF) — no segment reaches RELEASED until O-11, so this no-ops until then.
+        -->
+        <job name="rkd_payu_webkul_sync_recon_scan"
+             instance="RKD\PayuSplit\Split\Cron\WebkulSyncReconScan"
+             method="execute">
+            <schedule>6,21,36,51 * * * *</schedule>
+        </job>
+        <!--
+            #9 — return-strand alarm. Once a day, CRITICAL-log any PayU-split segment stuck
+            RETURN_OPEN past the alert threshold (an approved return whose refund is deferred to
+            Fab_Returns v2), so a blocked release is never a silent strand. Logging-only — no money,
+            no state change — so a daily cadence is enough and it is NOT gated by release_enabled.
+        -->
+        <job name="rkd_payu_return_strand_alarm_scan"
+             instance="RKD\PayuSplit\Split\Cron\ReturnStrandAlarmScan"
+             method="execute">
+            <schedule>30 6 * * *</schedule>
+        </job>
+        <!--
+            Gate blocker #4 — Webkul refund-close reconcile (self-heal backstop). Re-drives the
+            ledger close for any REFUNDED/PARTIAL_REFUNDED vendor segment whose close event was lost
+            (webkul_synced_at IS NULL). Idempotent + per-segment isolated. NOT gated by
+            release_enabled — refunds (the A5b cancellation path) run pre-release, so their ledger
+            close must too. Offset +8 from the split scan, just after the refund executor (5,20,35,50)
+            so a fresh refund's close lands promptly.
+        -->
+        <job name="rkd_payu_webkul_refund_close_recon_scan"
+             instance="RKD\PayuSplit\Split\Cron\WebkulRefundCloseReconScan"
+             method="execute">
+            <schedule>8,23,38,53 * * * *</schedule>
+        </job>
+        <!--
+            Gate item #6 — refund-status reconciliation. Polls check_action_status_txnid for each
+            pollable refund leg (QUEUED/PENDING with a request id) and promotes it to SUCCESS, or
+            FAILS + freezes + alarms a rejected one, or strand-alarms a stuck one (closes M-5: a
+            queued-then-failed refund no longer sits unconfirmed, silently leaving the customer
+            unrefunded). NOT gated by release_enabled — refunds run pre-release, so their status
+            reconciliation must too (mirrors the refund executor + close scans). Offset +14 from the
+            split scan, after the executor (5,20,35,50) so a fresh leg is fully written before it is
+            polled. PROD-VERIFY (O-11): check_action_status returns a generic error in UAT, so this
+            no-ops in sandbox until the status reader is calibrated.
+        -->
+        <job name="rkd_payu_refund_recon_scan"
+             instance="RKD\PayuSplit\Split\Cron\RefundReconScan"
+             method="execute">
+            <schedule>14,29,44,59 * * * *</schedule>
+        </job>
+        <!--
+            Gate item #11 — FROZEN-hold strand alarm. Daily CRITICAL-logs any non-terminal segment
+            whose TYPE_FROZEN hold (release readback mismatch INV-18, O-13 parent-key gap, out-of-band
+            credit-memo freeze on release #5 / refund F5, or the refund reconciler's post-FAILURE
+            freeze F6) has sat past the alert threshold. There is no hold-clear path today and only a
+            one-shot CRITICAL at placement, so an unreconciled freeze would go silent while it blocks
+            the parent commission (INV-14). Logging-only, moves no money. UNGATED — a freeze can occur
+            on the pre-release refund path, so its alarm must run while release_enabled is OFF. Daily
+            slot staggered +10 after the return-strand alarm (30 6).
+        -->
+        <job name="rkd_payu_frozen_strand_alarm_scan"
+             instance="RKD\PayuSplit\Split\Cron\FrozenStrandAlarmScan"
+             method="execute">
+            <schedule>40 6 * * *</schedule>
+        </job>
+        <!--
+            Gate item #13 — refund-leg strand alarm. Daily CRITICAL-logs the refund legs the recon
+            never resolves: a HELD freeze marker (R-6/R-7/negative/unfundable/F7) or a PENDING/QUEUED
+            leg with no PayU request id (the FULL_UNWIND shipping obligation + the absent-parent
+            commission leg — not pollable, so RefundLegLoader excludes them and RefundReconciler
+            early-returns before its own age-alarm). Each blocks the segment's release with no
+            recurring alarm. Logging-only, UNGATED. Daily slot staggered +20 after the return alarm.
+        -->
+        <job name="rkd_payu_refund_leg_strand_alarm_scan"
+             instance="RKD\PayuSplit\Split\Cron\RefundLegStrandAlarmScan"
+             method="execute">
+            <schedule>50 6 * * *</schedule>
+        </job>
+    </group>
+</config>

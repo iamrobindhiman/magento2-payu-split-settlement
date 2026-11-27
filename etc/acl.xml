@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="Magento_Sales::sales" title="Sales">
+                    <resource id="RKD_PayuSplit::settlements" title="PayU Settlements" sortOrder="100">
+                        <resource id="RKD_PayuSplit::settlement_manage"
+                                  title="Manage PayU Settlements (break-glass)" sortOrder="10"/>
+                    </resource>
+                    <resource id="RKD_PayuSplit::submerchants" title="PayU Submerchants" sortOrder="110"/>
+                </resource>
+                <!--
+                    The system.xml rkd_payu section (PayU Diagnostics + Split Settlement) declares
+                    <resource>RKD_PayuSplit::config</resource>. Without this definition the resource is
+                    unknown and Magento falls the whole section through to the "All" root permission,
+                    so the release_enabled money kill-switch could not be granted to a scoped role.
+                    Defining it under the standard config ACL parent makes the section least-privilege
+                    grantable.
+                -->
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="RKD_PayuSplit::config" title="PayU Configuration" sortOrder="100"/>
+                        </resource>
+                    </resource>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>

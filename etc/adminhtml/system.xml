@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="rkd" translate="label" sortOrder="200">
+            <label>ALLYNOR</label>
+        </tab>
+        <section id="rkd_payu" translate="label" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>PayU Diagnostics</label>
+            <tab>rkd</tab>
+            <resource>RKD_PayuSplit::config</resource>
+            <group id="diagnostic" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Diagnostic Logging</label>
+                <field id="log_enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable diagnostic log</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Writes structured diagnostic entries to var/log/payu.log. Default ON for local/staging, OFF for production.</comment>
+                </field>
+                <field id="redact_pii" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Redact PII in log</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When Yes, customer firstname/email/phone are masked in logs. Salt and merchant key are NEVER logged regardless of this setting.</comment>
+                </field>
+            </group>
+            <group id="split" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Split Settlement</label>
+                <field id="ceiling_days" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Split ceiling (days)</label>
+                    <validate>validate-digits validate-greater-than-zero</validate>
+                    <comment><![CDATA[Hard ceiling: an order's PayU split MUST fire by this many days after payment even if no vendor has shipped, so PayU never auto-settles an un-split transaction (RBI PA compliance control). Keep below PayU's auto-settlement window (~30 days). Default 25.]]></comment>
+                </field>
+                <field id="alert_days" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Compliance alert (days)</label>
+                    <validate>validate-digits validate-greater-than-zero</validate>
+                    <comment><![CDATA[An order still un-split at this age raises a warning in var/log/payu.log so an operator can investigate before the ceiling lands. Must be less than the ceiling. Default 23.]]></comment>
+                </field>
+                <field id="scan_batch_size" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Scan batch size</label>
+                    <validate>validate-digits validate-greater-than-zero</validate>
+                    <comment><![CDATA[Max split headers the trigger cron processes per run (oldest first). Bounds memory and PayU calls per tick; the rest are picked up next run. Default 200.]]></comment>
+                </field>
+                <field id="enable_rearm_refund" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable break-glass re-arm refund</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Keep DISABLED until PayU confirms duplicate-var2-on-rejection semantics (open question H-6). The money review found re-arm-refund's double-refund safety rests on that unproven behaviour. Retry-split and the audit log are unaffected.]]></comment>
+                </field>
+                <field id="enable_clear_hold" translate="label comment" type="select" sortOrder="45" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable break-glass clear FROZEN hold</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Break-glass clear of a FROZEN hold so the segment re-enters the release/refund gates (gate item #11). Keep DISABLED until operators are trained: the action always re-checks the out-of-band credit-memo condition and refuses if it still stands, and the downstream gates re-freeze if it persists — but it is a money-critical recovery action, so it is opt-in per store and audited.]]></comment>
+                </field>
+                <field id="release_enabled" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable settlement release</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Master kill-switch for the release path (A5c). Keep DISABLED until the O-11 own-account production verification: release is PROD-VERIFY only (E-07 — UAT cannot simulate settlement→release), and the readback reader's field mapping must be calibrated against a real settlement before any segment is allowed to reach RELEASED. While OFF, the release executor and the readback recon both no-op.]]></comment>
+                </field>
+            </group>
+            <group id="onboarding" translate="label" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Vendor Onboarding (PayU sub-merchants)</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable PayU vendor onboarding</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Master switch for creating PayU sub-merchants when a vendor is approved (N-6). Ship DISABLED: with this off nothing fires, no observer writes and no cron calls PayU, so behaviour is identical to today. Turn on only after existing vendors have been backfilled and the vendor counts corrected.]]></comment>
+                </field>
+                <field id="client_id" translate="label comment" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>OAuth client ID</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[The OAuth2 client_id PayU issues per account for the ONBOARDING API. This is NOT the merchant key used for payments — PayU's token endpoint rejects the merchant key as "unknown client". Get it from onboarding.payu.in -> Developer -> API Details, or from your PayU KAM.]]></comment>
+                </field>
+                <field id="client_secret" translate="label comment" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>OAuth client secret</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Issued alongside the client ID. Stored encrypted. Scopes required: refer_child_merchant (create/update/read a child) and fetch_child_merchants (list children) — both are needed, and a token minted for one is rejected on the other's routes.]]></comment>
+                </field>
+                <field id="parent_mid" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Aggregator parent MID</label>
+                    <validate>validate-digits</validate>
+                    <comment><![CDATA[ALLYNOR's own PayU MID. Every sub-merchant is created under it. If this is blank the create call is refused before it is sent: PayU answers 200 without it and silently creates an account OUTSIDE the aggregator that we can neither read, edit, split to, nor delete.]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

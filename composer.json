@@ -1,0 +1,15 @@
+{
+    "name": "rkd/magento2-payu-split",
+    "description": "Magento 2 split payment module for PayU India: per-vendor split settlement, refunds and release for Webkul Marketplace",
+    "type": "magento2-module",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "magento/framework": "*",
+        "payuindia/payu": "^2.4"
+    },
+    "autoload": {
+        "files": ["registration.php"],
+        "psr-4": {"RKD\\PayuSplit\\": ""}
+    }
+}

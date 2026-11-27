@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+
+    <!--
+        A4 — record-on-pay. Fires when an order's payment is captured (invoice
+        register). Global (not frontend-only) so it catches admin/API capture too.
+        The observer ignores non-PayU methods and is idempotent, so re-fires and
+        non-split orders are harmless.
+    -->
+    <event name="sales_order_payment_pay">
+        <observer name="rkd_payu_record_split_on_pay"
+                  instance="RKD\PayuSplit\Split\Observer\RecordSplitOnPay"/>
+    </event>
+
+    <!--
+        Gate blocker #1 (part b) — synchronous cancel hold. The release gate is otherwise blind to
+        cancellations; a cancel landing after a segment is delivery-eligible could let a release
+        cron tick fire and strand the customer's refund. These observers place a CANCELED hold the
+        moment the order/seller portion cancels, which the release scan + ReleaseProcessor already
+        exclude. Both are Throwable-guarded and never break the cancel flow.
+
+        order_cancel_after: full order cancel (admin/PayU/seller-full). Guarded on state=canceled —
+        Webkul fires it on partial seller cancels too (lesson_webkul_event_dispatch_order), where
+        the per-seller observer below is the right handler.
+    -->
+    <event name="order_cancel_after">
+        <observer name="rkd_payu_hold_segments_on_order_cancel"
+                  instance="RKD\PayuSplit\Split\Observer\HoldSegmentsOnOrderCancel"/>
+    </event>
+
+    <!--
+        mp_order_cancel_after: Webkul seller cancel (partial OR full) — the only event carrying the
+        cancelling seller_id. Holds that seller's vendor segment.
+    -->
+    <event name="mp_order_cancel_after">
+        <observer name="rkd_payu_hold_segment_on_seller_cancel"
+                  instance="RKD\PayuSplit\Split\Observer\HoldSegmentOnSellerCancel"/>
+    </event>
+
+    <!--
+        Gate blocker #1 (part c) — the producer for the per-item RETURN_OPEN release gate.
+        SegmentEligibility already blocks release on RETURN_OPEN items; this observer writes that
+        value when a Fab_Returns request changes status (open/approved → block; rejected → unblock).
+        Fires only when Fab_Returns is installed (it owns the event); Throwable-guarded; no-op for
+        non-PayU orders.
+    -->
+    <event name="fab_returns_status_changed">
+        <observer name="rkd_payu_mark_return_open_on_status"
+                  instance="RKD\PayuSplit\Split\Observer\MarkReturnOpenOnReturnStatus"/>
+    </event>
+
+    <!--
+        A5c-4 — mirror a confirmed release into Webkul's seller ledger. Fires when the A5c-5 recon
+        promotes a segment to RELEASED. The observer is idempotent (skips an already-mirrored
+        segment) and Throwable-guarded, so a mirror failure never disrupts the recon and the
+        reconcile scan re-drives it.
+    -->
+    <event name="rkd_payu_segment_released">
+        <observer name="rkd_payu_mirror_released_segment"
+                  instance="RKD\PayuSplit\Split\Observer\MirrorReleasedSegment"/>
+    </event>
+
+    <!--
+        Gate blocker #4 — close a refunded vendor in Webkul's ledger. Fires when the refund executor
+        terminalises a vendor segment to REFUNDED/PARTIAL_REFUNDED (the customer was refunded, so the
+        vendor is owed nothing). The observer flips that vendor's payable saleslist rows non-payable
+        so Webkul's native "Pay Seller" can never over-pay it (the durable source-of-truth correction
+        alongside the A5c-4b suppressor). Idempotent (webkul_synced_at) and Throwable-guarded, so a
+        close failure never disrupts the refund and the reconcile scan re-drives it.
+    -->
+    <event name="rkd_payu_segment_refunded">
+        <observer name="rkd_payu_close_refunded_segment"
+                  instance="RKD\PayuSplit\Split\Observer\CloseRefundedSegmentLedger"/>
+    </event>
+
+</config>

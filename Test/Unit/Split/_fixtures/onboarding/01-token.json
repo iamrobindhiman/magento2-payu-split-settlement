@@ -1,0 +1,17 @@
+{
+    "when": "2026-09-10T14:41:39+00:00",
+    "label": "01-token",
+    "request": {
+        "scope": "refer_child_merchant",
+        "grant_type": "client_credentials"
+    },
+    "http": 200,
+    "error": null,
+    "body": {
+        "access_token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "token_type": "Bearer",
+        "expires_in": 7199,
+        "scope": "refer_child_merchant",
+        "created_at": 1789051299
+    }
+}

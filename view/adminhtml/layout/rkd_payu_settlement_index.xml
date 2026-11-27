@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="loki_admin_components_grid"/>
+
+    <body>
+        <referenceContainer name="content">
+            <block name="rkd-payu.settlement-grid"
+                   template="Loki_AdminComponents::grid.phtml">
+                <arguments>
+                    <argument name="provider" xsi:type="string">
+                        RKD\PayuSplit\Split\Model\ResourceModel\SettlementGrid\Collection
+                    </argument>
+                    <argument name="namespace" xsi:type="string">rkd_payu_settlement_grid</argument>
+                    <argument name="primary_key" xsi:type="string">segment_id</argument>
+                    <!-- A7-3: the grid is actionable but has NO edit form — suppress Loki's
+                         default per-row Edit action (links to */*/form, no controller) while
+                         still allowing the conditional break-glass actions from
+                         SettlementGridViewModel::getAdditionalActions() (retry split / re-arm
+                         refund), each with its own ACL-gated, audited controller. -->
+                    <argument name="skip_edit_action" xsi:type="boolean">true</argument>
+
+                    <argument name="columns" xsi:type="array">
+                        <item name="segment_id" xsi:type="array">
+                            <item name="label" xsi:type="string">Seg ID</item>
+                            <item name="sort_order" xsi:type="number">10</item>
+                        </item>
+                        <item name="order_id" xsi:type="array">
+                            <item name="label" xsi:type="string">Order</item>
+                            <item name="sort_order" xsi:type="number">20</item>
+                        </item>
+                        <item name="vendor_label" xsi:type="array">
+                            <item name="label" xsi:type="string">Vendor</item>
+                            <item name="sort_order" xsi:type="number">30</item>
+                        </item>
+                        <item name="seller_id" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="segment_type" xsi:type="array">
+                            <item name="label" xsi:type="string">Type</item>
+                            <item name="sort_order" xsi:type="number">40</item>
+                        </item>
+                        <item name="state" xsi:type="array">
+                            <item name="label" xsi:type="string">State</item>
+                            <item name="sort_order" xsi:type="number">50</item>
+                        </item>
+                        <item name="amount_display" xsi:type="array">
+                            <item name="label" xsi:type="string">Amount</item>
+                            <item name="sort_order" xsi:type="number">60</item>
+                        </item>
+                        <item name="refunded_display" xsi:type="array">
+                            <item name="label" xsi:type="string">Refunded</item>
+                            <item name="sort_order" xsi:type="number">70</item>
+                        </item>
+                        <item name="released_display" xsi:type="array">
+                            <item name="label" xsi:type="string">Released</item>
+                            <item name="sort_order" xsi:type="number">80</item>
+                        </item>
+                        <item name="refund_summary" xsi:type="array">
+                            <item name="label" xsi:type="string">Refund Legs</item>
+                            <item name="sort_order" xsi:type="number">90</item>
+                        </item>
+                        <item name="eligibility_reason" xsi:type="array">
+                            <item name="label" xsi:type="string">Release Gate</item>
+                            <item name="sort_order" xsi:type="number">100</item>
+                        </item>
+                        <item name="created_at" xsi:type="array">
+                            <item name="label" xsi:type="string">Created</item>
+                            <item name="sort_order" xsi:type="number">110</item>
+                        </item>
+                        <!-- Hide auto-detected columns that the display columns supersede or
+                             that should not surface in the grid (raw paise, internal keys). -->
+                        <item name="split_id" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="child_merchant_key" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="child_mid" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="amount_paise" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="refunded_paise" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="released_paise" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="delivered_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="window_closes_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="released_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="release_attempts" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="last_error" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="intent_token" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="updated_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                    </argument>
+
+                    <argument name="searchable_fields" xsi:type="array">
+                        <item name="order_id" xsi:type="string">order_id</item>
+                        <item name="seller_id" xsi:type="string">seller_id</item>
+                    </argument>
+
+                    <argument name="grid_filters" xsi:type="array">
+                        <item name="segment_type" xsi:type="array">
+                            <item name="label" xsi:type="string">Type</item>
+                            <item name="condition_type" xsi:type="string">eq</item>
+                            <item name="field_type" xsi:type="string">select</item>
+                            <item name="options" xsi:type="string">RKD\PayuSplit\Split\Model\Source\SegmentType</item>
+                        </item>
+                        <item name="state" xsi:type="array">
+                            <item name="label" xsi:type="string">State</item>
+                            <item name="condition_type" xsi:type="string">eq</item>
+                            <item name="field_type" xsi:type="string">select</item>
+                            <item name="options" xsi:type="string">RKD\PayuSplit\Split\Model\Source\SegmentState</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>
