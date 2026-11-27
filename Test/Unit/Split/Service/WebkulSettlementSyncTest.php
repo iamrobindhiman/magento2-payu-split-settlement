@@ -177,7 +177,7 @@ class WebkulSettlementSyncTest extends TestCase
         $this->stubSaleslistCollection($deps['saleslistCollectionFactory'], [$row1, $row2]);
         $deps['saleslistResource']->expects($this->exactly(2))->method('save');
 
-        // saleperpartner: existing row id 5; remain 1000, received 500 -> remain 290.72, received 1209.28.
+        // saleperpartner: existing row id 5; remain 1000, received 500 -> remain 330.68, received 1169.32.
         $existing = $this->createMock(SaleperpartnerModel::class);
         $existing->method('getId')->willReturn(5);
         $this->stubSaleperpartnerCollection($deps['saleperpartnerCollectionFactory'], [$existing]);
@@ -185,8 +185,8 @@ class WebkulSettlementSyncTest extends TestCase
         $balanceRow->method('getAmountRemain')->willReturn(1000.0);
         $balanceRow->method('getAmountReceived')->willReturn(500.0);
         $balanceRow->expects($this->once())->method('setLastAmountPaid')->with(669.32);
-        $balanceRow->expects($this->once())->method('setAmountReceived')->with(1209.28);
-        $balanceRow->expects($this->once())->method('setAmountRemain')->with(290.72);
+        $balanceRow->expects($this->once())->method('setAmountReceived')->with(1169.32);
+        $balanceRow->expects($this->once())->method('setAmountRemain')->with(330.68);
         $deps['saleperpartnerFactory']->method('create')->willReturn($balanceRow);
 
         $deps['connection']->method('update')->willReturn(1); // CAS claim wins
