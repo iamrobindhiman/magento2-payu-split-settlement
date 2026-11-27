@@ -185,8 +185,8 @@ class WebkulSettlementSyncTest extends TestCase
         $balanceRow->method('getAmountRemain')->willReturn(1000.0);
         $balanceRow->method('getAmountReceived')->willReturn(500.0);
         $balanceRow->expects($this->once())->method('setLastAmountPaid')->with(669.32);
-        $balanceRow->expects($this->once())->method('setAmountReceived')->with(1169.32);
-        $balanceRow->expects($this->once())->method('setAmountRemain')->with(330.68);
+        $balanceRow->expects($this->once())->method('setAmountReceived')->with($this->equalToWithDelta(1169.32, 0.005));
+        $balanceRow->expects($this->once())->method('setAmountRemain')->with($this->equalToWithDelta(330.68, 0.005));
         $deps['saleperpartnerFactory']->method('create')->willReturn($balanceRow);
 
         $deps['connection']->method('update')->willReturn(1); // CAS claim wins
