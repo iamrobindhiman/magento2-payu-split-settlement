@@ -281,6 +281,7 @@ vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist app/code/RKD/PayuSplit/Tes
 - **Branches never merged** (see [Branches](#branches)).
 - The admin tab still carries the original client's brand, the console command is named `fab:payu:onboarding:run`, and a few docblocks keep pre-rename wording.
 - Regulatory notes are research, **not legal advice**.
+- **Webkul ledger mirror uses floats.** All split, refund and release maths is integer paise, but `WebkulSettlementSync` mirrors released amounts into Webkul's seller ledger (`setAmountReceived` / `setAmountRemain`) as rupee floats, because that is what Webkul's models take. The decimal DB column rounds on save, so it is harmless in practice, but the in-memory sum can carry float noise (e.g. `1169.3200000000002`).
 
 ## FAQ
 
