@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="loki_admin_components_form"/>
+
+    <body>
+        <referenceContainer name="content">
+            <block name="rkd-payu.submerchant-form"
+                   template="Loki_AdminComponents::form.phtml">
+                <arguments>
+                    <argument name="provider" xsi:type="string">
+                        RKD\PayuSplit\Split\Model\ResourceModel\Submerchant\Collection
+                    </argument>
+                    <!-- Server-side validation + normalisation run in beforeSave (see class). -->
+                    <argument name="item_convertor" xsi:type="object">
+                        RKD\PayuSplit\Split\Form\SubmerchantItemConvertor
+                    </argument>
+                    <argument name="index_url" xsi:type="string">rkd_payu/submerchant/index</argument>
+
+                    <!-- Loki auto-builds a field per table column; these definitions override the
+                         auto-detected type/label and HIDE the columns the admin must not edit
+                         (the PK and the DB-managed timestamps still ride in the posted item, so
+                         save routing + the timestamp-strip in the convertor are unaffected). -->
+                    <argument name="fields" xsi:type="array">
+                        <item name="entity_id" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="seller_id" xsi:type="array">
+                            <item name="label" xsi:type="string">Seller ID</item>
+                            <item name="field_type" xsi:type="string">number</item>
+                            <item name="required" xsi:type="boolean">true</item>
+                            <item name="sort_order" xsi:type="number">10</item>
+                            <item name="field_attributes" xsi:type="array">
+                                <item name="inputmode" xsi:type="string">numeric</item>
+                                <item name="min" xsi:type="string">1</item>
+                            </item>
+                        </item>
+                        <item name="payu_merchant_key" xsi:type="array">
+                            <item name="label" xsi:type="string">PayU Child Merchant Key</item>
+                            <item name="field_type" xsi:type="string">input</item>
+                            <item name="required" xsi:type="boolean">true</item>
+                            <item name="sort_order" xsi:type="number">20</item>
+                        </item>
+                        <item name="payu_mid" xsi:type="array">
+                            <item name="label" xsi:type="string">PayU Child MID (optional)</item>
+                            <item name="field_type" xsi:type="string">input</item>
+                            <item name="sort_order" xsi:type="number">30</item>
+                        </item>
+                        <item name="kyc_status" xsi:type="array">
+                            <item name="label" xsi:type="string">KYC Status</item>
+                            <item name="field_type" xsi:type="string">select</item>
+                            <item name="options" xsi:type="string">RKD\PayuSplit\Split\Model\Source\KycStatus</item>
+                            <item name="sort_order" xsi:type="number">40</item>
+                        </item>
+                        <item name="is_active" xsi:type="array">
+                            <item name="label" xsi:type="string">Active</item>
+                            <item name="field_type" xsi:type="string">select</item>
+                            <item name="options" xsi:type="string">Magento\Config\Model\Config\Source\Yesno</item>
+                            <item name="sort_order" xsi:type="number">50</item>
+                        </item>
+                        <item name="created_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="updated_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <!-- Onboarding-owned columns: never editable here (the convertor also drops them). -->
+                        <item name="onboarding_state" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="payu_uuid" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="payu_email" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="last_error" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="error_class" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="attempts" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="last_attempt_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="next_attempt_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="locked_until" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="esign_sent_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="esign_sent_by" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="activated_at" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

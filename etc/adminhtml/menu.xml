@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="RKD_PayuSplit::settlements"
+             title="PayU Settlements"
+             translate="title"
+             module="RKD_PayuSplit"
+             sortOrder="100"
+             parent="Magento_Sales::sales_operation"
+             action="rkd_payu/settlement/index"
+             resource="RKD_PayuSplit::settlements"/>
+        <add id="RKD_PayuSplit::submerchants"
+             title="PayU Submerchants"
+             translate="title"
+             module="RKD_PayuSplit"
+             sortOrder="110"
+             parent="Magento_Sales::sales_operation"
+             action="rkd_payu/submerchant/index"
+             resource="RKD_PayuSplit::submerchants"/>
+        <add id="RKD_PayuSplit::audit"
+             title="PayU Settlement Audit"
+             translate="title"
+             module="RKD_PayuSplit"
+             sortOrder="120"
+             parent="Magento_Sales::sales_operation"
+             action="rkd_payu/audit/index"
+             resource="RKD_PayuSplit::settlements"/>
+    </menu>
+</config>

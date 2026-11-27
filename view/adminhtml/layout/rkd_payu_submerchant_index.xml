@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="loki_admin_components_grid"/>
+
+    <body>
+        <referenceContainer name="content">
+            <block name="rkd-payu.submerchant-grid"
+                   template="Loki_AdminComponents::grid.phtml">
+                <arguments>
+                    <argument name="provider" xsi:type="string">
+                        RKD\PayuSplit\Split\Model\ResourceModel\SubmerchantGrid\Collection
+                    </argument>
+                    <argument name="namespace" xsi:type="string">rkd_payu_submerchant_grid</argument>
+                    <argument name="primary_key" xsi:type="string">entity_id</argument>
+                    <!-- Actionable grid (unlike A7-1): per-row Edit + the Add-New button both
+                         link to */*/form → rkd_payu/submerchant/form. The newAction method
+                         navigates to the grid's getNewUrl() (*/*/form) client-side. -->
+                    <argument name="button_actions" xsi:type="array">
+                        <item name="new" xsi:type="array">
+                            <item name="method" xsi:type="string">newAction</item>
+                            <item name="label" xsi:type="string">Add New Mapping</item>
+                            <item name="cssClass" xsi:type="string">add</item>
+                            <item name="primary" xsi:type="boolean">true</item>
+                        </item>
+                    </argument>
+
+                    <argument name="columns" xsi:type="array">
+                        <item name="entity_id" xsi:type="array">
+                            <item name="label" xsi:type="string">ID</item>
+                            <item name="sort_order" xsi:type="number">10</item>
+                        </item>
+                        <item name="seller_id" xsi:type="array">
+                            <item name="label" xsi:type="string">Seller ID</item>
+                            <item name="sort_order" xsi:type="number">20</item>
+                        </item>
+                        <item name="key_display" xsi:type="array">
+                            <item name="label" xsi:type="string">Merchant Key</item>
+                            <item name="sort_order" xsi:type="number">30</item>
+                        </item>
+                        <item name="mid_display" xsi:type="array">
+                            <item name="label" xsi:type="string">MID</item>
+                            <item name="sort_order" xsi:type="number">40</item>
+                        </item>
+                        <item name="kyc_display" xsi:type="array">
+                            <item name="label" xsi:type="string">KYC</item>
+                            <item name="sort_order" xsi:type="number">50</item>
+                        </item>
+                        <item name="active_display" xsi:type="array">
+                            <item name="label" xsi:type="string">Active</item>
+                            <item name="sort_order" xsi:type="number">60</item>
+                        </item>
+                        <item name="onboarding_state" xsi:type="array">
+                            <item name="label" xsi:type="string">Onboarding</item>
+                            <item name="sort_order" xsi:type="number">62</item>
+                        </item>
+                        <item name="esign_display" xsi:type="array">
+                            <item name="label" xsi:type="string">Schedule C e-sign</item>
+                            <item name="sort_order" xsi:type="number">64</item>
+                        </item>
+                        <item name="error_display" xsi:type="array">
+                            <item name="label" xsi:type="string">Last error</item>
+                            <item name="sort_order" xsi:type="number">66</item>
+                        </item>
+                        <item name="attempts" xsi:type="array">
+                            <item name="label" xsi:type="string">Retries</item>
+                            <item name="sort_order" xsi:type="number">68</item>
+                        </item>
+                        <item name="next_attempt_at" xsi:type="array">
+                            <item name="label" xsi:type="string">Next try (UTC)</item>
+                            <item name="sort_order" xsi:type="number">69</item>
+                        </item>
+                        <item name="created_at" xsi:type="array">
+                            <item name="label" xsi:type="string">Created</item>
+                            <item name="sort_order" xsi:type="number">70</item>
+                        </item>
+                        <item name="updated_at" xsi:type="array">
+                            <item name="label" xsi:type="string">Updated</item>
+                            <item name="sort_order" xsi:type="number">80</item>
+                        </item>
+                        <!-- Never surface the raw routing identifiers in the list view; the grid
+                             shows the masked key_display / mid_display instead, and the raw
+                             kyc_status / is_active are superseded by the human-label columns. -->
+                        <item name="payu_merchant_key" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="payu_mid" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="kyc_status" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="is_active" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="payu_uuid" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="last_error" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                        <item name="locked_until" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                    </argument>
+
+                    <argument name="searchable_fields" xsi:type="array">
+                        <item name="seller_id" xsi:type="string">seller_id</item>
+                        <item name="onboarding_state" xsi:type="string">onboarding_state</item>
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

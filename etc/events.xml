@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+
+    <!--
+        A4 — record-on-pay. Fires when an order's payment is captured (invoice
+        register). Global (not frontend-only) so it catches admin/API capture too.
+        The observer ignores non-PayU methods and is idempotent, so re-fires and
+        non-split orders are harmless.
+    -->
+    <event name="sales_order_payment_pay">
+        <observer name="rkd_payu_record_split_on_pay"
+                  instance="RKD\PayuSplit\Split\Observer\RecordSplitOnPay"/>
+    </event>
+
+    <!--
+        A5c-4 — mirror a confirmed release into Webkul's seller ledger. Fires when the A5c-5 recon
+        promotes a segment to RELEASED. The observer is idempotent (skips an already-mirrored
+        segment) and Throwable-guarded, so a mirror failure never disrupts the recon and the
+        reconcile scan re-drives it.
+    -->
+    <event name="rkd_payu_segment_released">
+        <observer name="rkd_payu_mirror_released_segment"
+                  instance="RKD\PayuSplit\Split\Observer\MirrorReleasedSegment"/>
+    </event>
+
+    <!--
+        S-3 — vendor approved in Marketplace > Manage Sellers -> queue for PayU onboarding.
+        Writes one row, calls nothing, never throws (it runs inside Webkul's mass-approve loop).
+        No-op while rkd_payu/onboarding/enabled is off.
+    -->
+    <event name="mp_approve_seller">
+        <observer name="rkd_payu_queue_submerchant_on_approval"
+                  instance="RKD\PayuSplit\Split\Observer\QueueSubmerchantOnApproval"/>
+    </event>
+
+</config>

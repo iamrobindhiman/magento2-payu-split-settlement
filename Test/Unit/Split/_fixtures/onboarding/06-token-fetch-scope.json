@@ -1,0 +1,15 @@
+{
+    "when": "2026-09-10T14:42:08+00:00",
+    "label": "06-token-fetch-scope",
+    "request": {
+        "scope": "fetch_child_merchants"
+    },
+    "http": 200,
+    "body": {
+        "access_token":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "token_type": "Bearer",
+        "expires_in": 7199,
+        "scope": "fetch_child_merchants",
+        "created_at": 1789051328
+    }
+}

@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <!--
+            A5a — split-trigger scan. Fires payment_split for each order at the
+            earliest of its trigger conditions (all vendors shipped-or-cancelled, or
+            the T+N-day ceiling). Idempotent and per-order isolated, so a frequent
+            run is safe; every 15 minutes keeps the split prompt after a ship event
+            without hammering the gateway.
+        -->
+        <job name="rkd_payu_split_trigger_scan"
+             instance="RKD\PayuSplit\Split\Cron\SplitTriggerScan"
+             method="execute">
+            <schedule>*/15 * * * *</schedule>
+        </job>
+        <!--
+            A5b — refund executor scan. Issues customer refunds (var8) for cancelled
+            vendor segments on already-split orders. Idempotent (ledger-presence guard +
+            write-ahead token) and per-segment isolated, so a frequent run is safe; every
+            15 minutes keeps refunds prompt after a cancel (a CPA 2019 / RBI PA timeline
+            concern). Offset by 5 minutes from the split scan so a cancel-driven split has
+            landed before the refund scan looks for it.
+        -->
+        <job name="rkd_payu_refund_executor_scan"
+             instance="RKD\PayuSplit\Split\Cron\RefundExecutorScan"
+             method="execute">
+            <schedule>5,20,35,50 * * * *</schedule>
+        </job>
+        <!--
+            A6 — per-vendor delivery poll. For each undelivered vendor segment on an
+            already-split order, asks Shiprocket whether that seller's shipment is delivered
+            and stamps delivered_at + the return-window close on the segment's items, so A5c's
+            per-vendor eligibility can fire independently (the S-19 deadlock fix). Write-once
+            stamping + per-candidate isolation make a frequent run safe. Offset +10 minutes
+            from the split scan so a fresh split has landed before the poll looks for it.
+        -->
+        <job name="rkd_payu_delivery_poll_scan"
+             instance="RKD\PayuSplit\Split\Cron\DeliveryPollScan"
+             method="execute">
+            <schedule>10,25,40,55 * * * *</schedule>
+        </job>
+        <!--
+            A5c-3 — release executor scan. For each release-eligible segment (vendor: delivered +
+            window cleared; parent: parent-last), fires release_settlement once via the
+            ReleaseProcessor CAS (ELIGIBLE -> RELEASE_REQUESTED). Offset +3 from the split scan.
+            GATED by rkd_payu/split/release_enabled (default OFF) — release is PROD-VERIFY only
+            (E-07 -> O-11), so this scan no-ops until the switch is enabled.
+        -->
+        <job name="rkd_payu_release_executor_scan"
+             instance="RKD\PayuSplit\Split\Cron\ReleaseExecutorScan"
+             method="execute">
+            <schedule>3,18,33,48 * * * *</schedule>
+        </job>
+        <!--
+            A5c-5 — release readback reconciliation. For each segment left in RELEASE_REQUESTED by
+            the release executor, reads the settled amount back from PayU (get_aggregator_transactions)
+            and promotes RELEASE_REQUESTED -> RELEASED (INV-18) or freezes a mismatch. Settlement is
+            async (T+1) so frequency is not critical; offset +12 from the split scan to interleave
+            with the other scans. GATED by rkd_payu/split/release_enabled (default OFF) — release is
+            PROD-VERIFY only (E-07 -> O-11), so this scan no-ops until the switch is enabled.
+        -->
+        <job name="rkd_payu_release_recon_scan"
+             instance="RKD\PayuSplit\Split\Cron\ReleaseReconScan"
+             method="execute">
+            <schedule>12,27,42,57 * * * *</schedule>
+        </job>
+        <!--
+            A5c-4 — Webkul ledger-mirror reconcile (self-heal backstop). Re-drives WebkulSettlementSync
+            for any RELEASED segment whose mirror event was lost (webkul_synced_at IS NULL). Idempotent
+            + per-segment isolated. Offset +6 from the split scan. GATED by rkd_payu/split/release_enabled
+            (default OFF) — no segment reaches RELEASED until O-11, so this no-ops until then.
+        -->
+        <job name="rkd_payu_webkul_sync_recon_scan"
+             instance="RKD\PayuSplit\Split\Cron\WebkulSyncReconScan"
+             method="execute">
+            <schedule>6,21,36,51 * * * *</schedule>
+        </job>
+        <!--
+            S-3 — PayU vendor onboarding. Takes each approved vendor from QUEUED through create and
+            bank-attach to the staff e-sign queue. Per-vendor lease + isolation make a frequent run safe;
+            every 5 minutes keeps a fresh approval moving. No-op unless rkd_payu/onboarding/enabled.
+        -->
+        <job name="rkd_payu_onboarding_scan"
+             instance="RKD\PayuSplit\Split\Cron\OnboardingScan"
+             method="execute">
+            <schedule>*/5 * * * *</schedule>
+        </job>
+    </group>
+</config>

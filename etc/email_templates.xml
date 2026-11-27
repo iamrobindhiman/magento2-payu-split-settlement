@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Email:etc/email_templates.xsd">
+    <template id="rkd_payu_onboarding_alert"
+              label="PayU: Vendor onboarding needs attention"
+              file="onboarding_alert.html"
+              type="html"
+              module="RKD_PayuSplit"
+              area="adminhtml"/>
+</config>

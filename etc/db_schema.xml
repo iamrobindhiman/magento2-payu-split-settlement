@@ -1,0 +1,276 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="rkd_payu_submerchant" resource="default" engine="innodb"
+           comment="Maps a Webkul seller to its PayU child sub-merchant (split payee)">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"
+                comment="Entity ID"/>
+        <column xsi:type="int" name="seller_id" unsigned="true" nullable="false"
+                comment="Webkul seller (customer) id"/>
+        <column xsi:type="varchar" name="payu_merchant_key" length="64" nullable="true"
+                comment="PayU child merchant key (pg_key). Null until PayU has created the account."/>
+        <column xsi:type="varchar" name="payu_uuid" length="64" nullable="true"
+                comment="PayU product_account uuid — required to address every subsequent PUT/GET"/>
+        <column xsi:type="varchar" name="payu_mid" length="32" nullable="true"
+                comment="PayU child numeric MID"/>
+        <column xsi:type="varchar" name="kyc_status" length="20" nullable="false" default="pending"
+                comment="pending|verified|rejected"/>
+        <column xsi:type="smallint" name="is_active" unsigned="true" nullable="false" default="0"
+                comment="1 = usable as a split payee. Defaults to 0: a half-built onboarding row must be inert to the split path."/>
+        <column xsi:type="varchar" name="onboarding_state" length="24" nullable="false" default="NOT_STARTED"
+                comment="NOT_STARTED|QUEUED|CREATED|BANK_ATTACHED|AWAITING_ESIGN|ACTIVE|FAILED"/>
+        <column xsi:type="text" name="last_error" nullable="true"
+                comment="Reason the last onboarding attempt failed"/>
+        <column xsi:type="smallint" name="attempts" unsigned="true" nullable="false" default="0"
+                comment="Onboarding attempts made, for backoff and give-up"/>
+        <column xsi:type="datetime" name="last_attempt_at" nullable="true"
+                comment="When the last onboarding attempt ran"/>
+        <column xsi:type="datetime" name="esign_sent_at" nullable="true"
+                comment="When staff triggered the Schedule C e-sign email in PayU's dashboard"/>
+        <column xsi:type="int" name="esign_sent_by" unsigned="true" nullable="true"
+                comment="admin_user.user_id who triggered the e-sign — audit trail"/>
+        <column xsi:type="datetime" name="activated_at" nullable="true"
+                comment="When PayU confirmed the sub-merchant active"/>
+        <column xsi:type="datetime" name="next_attempt_at" nullable="true"
+                comment="Earliest time the onboarding cron may retry this vendor (backoff); null = due now"/>
+        <column xsi:type="datetime" name="locked_until" nullable="true"
+                comment="Claim lease: a run holding this vendor until then; stops two runs calling PayU twice"/>
+        <column xsi:type="varchar" name="error_class" length="24" nullable="true"
+                comment="retryable|business|configuration|orphan — why the last attempt failed"/>
+        <column xsi:type="varchar" name="payu_email" length="255" nullable="true"
+                comment="The email a create was sent to PayU with, stored BEFORE the call — the key a retry adopts on"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created at"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="RKD_PAYU_SUBMERCHANT_SELLER_ID">
+            <column name="seller_id"/>
+        </constraint>
+        <!-- One PayU account can belong to one seller only. NULLs (not yet created) do not collide. -->
+        <constraint xsi:type="unique" referenceId="RKD_PAYU_SUBMERCHANT_PAYU_UUID">
+            <column name="payu_uuid"/>
+        </constraint>
+        <index referenceId="RKD_PAYU_SUBMERCHANT_ONBOARDING_STATE" indexType="btree">
+            <column name="onboarding_state"/>
+        </index>
+    </table>
+
+    <!-- A4: per-order split lifecycle header (one row per order). -->
+    <table name="rkd_payu_split" resource="default" engine="innodb"
+           comment="Per-order PayU split lifecycle header">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="Magento sales_order entity id"/>
+        <column xsi:type="varchar" name="order_increment_id" length="32" nullable="true" comment="Human increment id"/>
+        <column xsi:type="varchar" name="mihpayid" length="64" nullable="true" comment="PayU transaction id"/>
+        <column xsi:type="bigint" name="txn_amount_paise" unsigned="false" nullable="false" default="0"
+                comment="Captured transaction total, in paise"/>
+        <column xsi:type="bigint" name="shipping_paise" unsigned="false" nullable="false" default="0"
+                comment="Customer-paid shipping snapshotted at split (O-9 full-unwind make-whole), in paise"/>
+        <column xsi:type="varchar" name="split_state" length="20" nullable="false" default="PENDING"
+                comment="PENDING|ELIGIBLE|REQUESTED|DONE|NOT_REQUIRED|FAILED"/>
+        <column xsi:type="varchar" name="split_trigger" length="20" nullable="true"
+                comment="ALL_TERMINAL|MONEY_EVENT|CEILING"/>
+        <column xsi:type="datetime" name="paid_at" nullable="true" comment="When payment captured"/>
+        <column xsi:type="datetime" name="split_requested_at" nullable="true" comment="When payment_split posted"/>
+        <column xsi:type="datetime" name="split_done_at" nullable="true" comment="When split confirmed"/>
+        <column xsi:type="text" name="payu_split_response" nullable="true" comment="Raw get_split_info readback"/>
+        <column xsi:type="text" name="last_error" nullable="true" comment="Last failure reason"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created at"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="RKD_PAYU_SPLIT_ORDER_ID">
+            <column name="order_id"/>
+        </constraint>
+        <index referenceId="RKD_PAYU_SPLIT_STATE" indexType="btree">
+            <column name="split_state"/>
+        </index>
+    </table>
+
+    <!-- A4: the settlement unit — one segment per (order, seller); seller_id 0 = marketplace parent. -->
+    <table name="rkd_payu_split_segment" resource="default" engine="innodb"
+           comment="Per-(order,seller) settlement segment">
+        <column xsi:type="int" name="segment_id" unsigned="true" nullable="false" identity="true" comment="Segment ID"/>
+        <column xsi:type="int" name="split_id" unsigned="true" nullable="false" comment="FK rkd_payu_split.entity_id"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="Denormalised order id for scans"/>
+        <column xsi:type="int" name="seller_id" unsigned="true" nullable="false" comment="Webkul seller id (0 = parent)"/>
+        <column xsi:type="varchar" name="child_merchant_key" length="64" nullable="true" comment="PayU child key"/>
+        <column xsi:type="varchar" name="child_mid" length="32" nullable="true" comment="PayU child numeric MID"/>
+        <column xsi:type="varchar" name="segment_type" length="20" nullable="false" default="vendor"
+                comment="vendor|commission"/>
+        <column xsi:type="bigint" name="amount_paise" unsigned="false" nullable="false" default="0"
+                comment="Snapshot segment amount, paise"/>
+        <column xsi:type="bigint" name="refunded_paise" unsigned="false" nullable="false" default="0"
+                comment="Cumulative refunded, paise"/>
+        <column xsi:type="bigint" name="released_paise" unsigned="false" nullable="false" default="0"
+                comment="Released amount, paise"/>
+        <column xsi:type="varchar" name="state" length="30" nullable="false" default="PENDING"
+                comment="Segment lifecycle state"/>
+        <column xsi:type="datetime" name="delivered_at" nullable="true" comment="Derived = max(item delivered_at)"/>
+        <column xsi:type="datetime" name="window_closes_at" nullable="true" comment="Derived = max(item window)"/>
+        <column xsi:type="datetime" name="released_at" nullable="true" comment="When released"/>
+        <column xsi:type="datetime" name="release_requested_at" nullable="true"
+                comment="When release_settlement was requested (A5c-2 CAS claim); recon strand-age anchor"/>
+        <column xsi:type="datetime" name="webkul_synced_at" nullable="true"
+                comment="When the release was mirrored into Webkul's seller ledger (A5c-4 idempotency/reconcile)"/>
+        <column xsi:type="int" name="release_attempts" unsigned="true" nullable="false" default="0"
+                comment="Release retry counter"/>
+        <column xsi:type="text" name="last_error" nullable="true" comment="Last failure reason"/>
+        <column xsi:type="varchar" name="intent_token" length="64" nullable="true" comment="Write-ahead intent token"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created at"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="segment_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="RKD_PAYU_SEGMENT_SPLIT_ID"
+                    table="rkd_payu_split_segment" column="split_id"
+                    referenceTable="rkd_payu_split" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="RKD_PAYU_SEGMENT_ORDER_SELLER">
+            <column name="order_id"/>
+            <column name="seller_id"/>
+        </constraint>
+        <index referenceId="RKD_PAYU_SEGMENT_STATE" indexType="btree">
+            <column name="state"/>
+        </index>
+        <index referenceId="RKD_PAYU_SEGMENT_SELLER" indexType="btree">
+            <column name="seller_id"/>
+        </index>
+    </table>
+
+    <!-- A4: per-item gating detail under a segment (plus replacement rows). -->
+    <table name="rkd_payu_segment_item" resource="default" engine="innodb"
+           comment="Per-item delivery/return gating under a segment">
+        <column xsi:type="int" name="item_row_id" unsigned="true" nullable="false" identity="true" comment="Item row ID"/>
+        <column xsi:type="int" name="segment_id" unsigned="true" nullable="false" comment="FK rkd_payu_split_segment"/>
+        <column xsi:type="int" name="order_item_id" unsigned="true" nullable="true" comment="sales_order_item id"/>
+        <column xsi:type="int" name="mageproduct_id" unsigned="true" nullable="true" comment="Catalog product id"/>
+        <column xsi:type="int" name="shipment_id" unsigned="true" nullable="true" comment="Shipment id (nullable)"/>
+        <column xsi:type="varchar" name="awb" length="64" nullable="true" comment="Shiprocket AWB"/>
+        <column xsi:type="bigint" name="item_amount_paise" unsigned="false" nullable="false" default="0"
+                comment="Vendor payout for this line, paise"/>
+        <column xsi:type="bigint" name="item_commission_paise" unsigned="false" nullable="false" default="0"
+                comment="Commission on this line, paise"/>
+        <column xsi:type="int" name="qty" unsigned="true" nullable="false" default="0" comment="Ordered qty"/>
+        <column xsi:type="datetime" name="delivered_at" nullable="true" comment="Per-item delivery"/>
+        <column xsi:type="datetime" name="window_closes_at" nullable="true" comment="Return window close (reset on replacement)"/>
+        <column xsi:type="varchar" name="return_state" length="20" nullable="false" default="none"
+                comment="none|open|refunded|replaced|rejected"/>
+        <column xsi:type="bigint" name="refunded_paise" unsigned="false" nullable="false" default="0"
+                comment="Per-item refunded, paise"/>
+        <column xsi:type="int" name="replacement_of_item_row_id" unsigned="true" nullable="true"
+                comment="Replacement chain link"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created at"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="item_row_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="RKD_PAYU_ITEM_SEGMENT_ID"
+                    table="rkd_payu_segment_item" column="segment_id"
+                    referenceTable="rkd_payu_split_segment" referenceColumn="segment_id" onDelete="CASCADE"/>
+        <index referenceId="RKD_PAYU_ITEM_SEGMENT" indexType="btree">
+            <column name="segment_id"/>
+        </index>
+        <index referenceId="RKD_PAYU_ITEM_ORDER_ITEM" indexType="btree">
+            <column name="order_item_id"/>
+        </index>
+        <index referenceId="RKD_PAYU_ITEM_AWB" indexType="btree">
+            <column name="awb"/>
+        </index>
+    </table>
+
+    <!-- A4: one row per var8 refund leg (matches PayU's per-merchant-key response). -->
+    <table name="rkd_payu_refund" resource="default" engine="innodb"
+           comment="PayU var8 refund legs (one per merchant-key debit)">
+        <column xsi:type="int" name="refund_id" unsigned="true" nullable="false" identity="true" comment="Refund ID"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="Magento order id"/>
+        <column xsi:type="int" name="segment_id" unsigned="true" nullable="false" comment="FK rkd_payu_split_segment"/>
+        <column xsi:type="bigint" name="amount_paise" unsigned="false" nullable="false" default="0"
+                comment="Leg amount, paise"/>
+        <column xsi:type="bigint" name="aggregator_paise" unsigned="false" nullable="false" default="0"
+                comment="aggregatorRefundAmount portion, paise"/>
+        <column xsi:type="varchar" name="payu_request_id" length="64" nullable="true" comment="PayU refund request id"/>
+        <column xsi:type="varchar" name="state" length="20" nullable="false" default="PENDING"
+                comment="PENDING|QUEUED|SUCCESS|FAILED|HELD|REARMED"/>
+        <column xsi:type="varchar" name="reason" length="30" nullable="true"
+                comment="VENDOR_CANCEL|CUSTOMER_CANCEL|RETURN|RTO|LOST|FULL_UNWIND"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created at"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="refund_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="RKD_PAYU_REFUND_SEGMENT_ID"
+                    table="rkd_payu_refund" column="segment_id"
+                    referenceTable="rkd_payu_split_segment" referenceColumn="segment_id" onDelete="CASCADE"/>
+        <index referenceId="RKD_PAYU_REFUND_SEGMENT" indexType="btree">
+            <column name="segment_id"/>
+        </index>
+        <index referenceId="RKD_PAYU_REFUND_STATE" indexType="btree">
+            <column name="state"/>
+        </index>
+    </table>
+
+    <!-- A4: active holds on a segment (a SET; release is blocked while non-empty). -->
+    <table name="rkd_payu_segment_hold" resource="default" engine="innodb"
+           comment="Active holds blocking a segment's release">
+        <column xsi:type="int" name="hold_id" unsigned="true" nullable="false" identity="true" comment="Hold ID"/>
+        <column xsi:type="int" name="segment_id" unsigned="true" nullable="false" comment="FK rkd_payu_split_segment"/>
+        <column xsi:type="varchar" name="hold_type" length="30" nullable="false"
+                comment="KYC_SUSPENDED|RETURN_OPEN|REPLACEMENT|MANUAL"/>
+        <column xsi:type="varchar" name="note" length="255" nullable="true" comment="Optional reason note"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="hold_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="RKD_PAYU_HOLD_SEGMENT_ID"
+                    table="rkd_payu_segment_hold" column="segment_id"
+                    referenceTable="rkd_payu_split_segment" referenceColumn="segment_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="RKD_PAYU_HOLD_SEGMENT_TYPE">
+            <column name="segment_id"/>
+            <column name="hold_type"/>
+        </constraint>
+    </table>
+
+    <!-- A7-3: immutable audit trail for break-glass admin actions (retry split, re-arm refund).
+         Standalone (no FK) so a row survives even if its referenced split/segment is later
+         removed; append-only — never updated or deleted. -->
+    <table name="rkd_payu_audit_log" resource="default" engine="innodb"
+           comment="Audit trail of break-glass PayU settlement admin actions">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
+        <column xsi:type="int" name="admin_user_id" unsigned="true" nullable="true" comment="Acting admin user id"/>
+        <column xsi:type="varchar" name="admin_user_name" length="64" nullable="true"
+                comment="Acting admin username (snapshot)"/>
+        <column xsi:type="varchar" name="action" length="64" nullable="false" comment="retry_split|rearm_refund|..."/>
+        <column xsi:type="varchar" name="entity_type" length="32" nullable="false" comment="split|segment"/>
+        <column xsi:type="int" name="entity_ref_id" unsigned="true" nullable="false" comment="Acted-on split/segment id"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="true"
+                comment="Magento sales_order entity id (context)"/>
+        <column xsi:type="varchar" name="before_state" length="32" nullable="true" comment="State before the action"/>
+        <column xsi:type="varchar" name="after_state" length="32" nullable="true" comment="State after the action"/>
+        <column xsi:type="text" name="note" nullable="true" comment="Optional operator note / context"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="When the action was taken"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <index referenceId="RKD_PAYU_AUDIT_ENTITY" indexType="btree">
+            <column name="entity_type"/>
+            <column name="entity_ref_id"/>
+        </index>
+        <index referenceId="RKD_PAYU_AUDIT_ORDER" indexType="btree">
+            <column name="order_id"/>
+        </index>
+    </table>
+</schema>

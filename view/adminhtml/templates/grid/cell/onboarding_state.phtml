@@ -1,0 +1,36 @@
+<?php
+/**
+ * Coloured badge for a rkd_payu_submerchant onboarding state in the PayU Submerchants grid.
+ *
+ * @var $block \Loki\AdminComponents\Block\Grid\Cell
+ * @var $escaper \Magento\Framework\Escaper
+ */
+
+$value = (string) $block->getValue();
+
+$labels = [
+    'NOT_STARTED' => __('Not started'),
+    'QUEUED' => __('Queued'),
+    'CREATED' => __('Created at PayU'),
+    'BANK_ATTACHED' => __('Bank attached'),
+    'AWAITING_ESIGN' => __('Waiting for e-sign'),
+    'ACTIVE' => __('Active'),
+    'FAILED' => __('Failed'),
+];
+
+$classes = [
+    'NOT_STARTED' => 'grid-severity-minor',
+    'QUEUED' => 'grid-severity-minor',
+    'CREATED' => 'grid-severity-minor',
+    'BANK_ATTACHED' => 'grid-severity-minor',
+    'AWAITING_ESIGN' => 'grid-severity-major',
+    'ACTIVE' => 'grid-severity-notice',
+    'FAILED' => 'grid-severity-critical',
+];
+
+$label = $labels[$value] ?? $value;
+$class = $classes[$value] ?? '';
+?>
+<span class="<?= $escaper->escapeHtmlAttr($class) ?>">
+    <span><?= $escaper->escapeHtml($label) ?></span>
+</span>

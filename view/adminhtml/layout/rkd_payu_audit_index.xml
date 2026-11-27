@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="loki_admin_components_grid"/>
+
+    <body>
+        <referenceContainer name="content">
+            <block name="rkd-payu.audit-grid"
+                   template="Loki_AdminComponents::grid.phtml">
+                <arguments>
+                    <argument name="provider" xsi:type="string">
+                        RKD\PayuSplit\Split\Model\ResourceModel\AuditLog\Collection
+                    </argument>
+                    <argument name="namespace" xsi:type="string">rkd_payu_audit_grid</argument>
+                    <argument name="primary_key" xsi:type="string">entity_id</argument>
+                    <!-- Read-only trail: no per-row edit, no create. -->
+                    <argument name="hide_actions" xsi:type="boolean">true</argument>
+
+                    <argument name="columns" xsi:type="array">
+                        <item name="entity_id" xsi:type="array">
+                            <item name="label" xsi:type="string">ID</item>
+                            <item name="sort_order" xsi:type="number">10</item>
+                        </item>
+                        <item name="created_at" xsi:type="array">
+                            <item name="label" xsi:type="string">When</item>
+                            <item name="sort_order" xsi:type="number">20</item>
+                        </item>
+                        <item name="admin_user_name" xsi:type="array">
+                            <item name="label" xsi:type="string">Admin</item>
+                            <item name="sort_order" xsi:type="number">30</item>
+                        </item>
+                        <item name="action" xsi:type="array">
+                            <item name="label" xsi:type="string">Action</item>
+                            <item name="sort_order" xsi:type="number">40</item>
+                        </item>
+                        <item name="entity_type" xsi:type="array">
+                            <item name="label" xsi:type="string">Entity</item>
+                            <item name="sort_order" xsi:type="number">50</item>
+                        </item>
+                        <item name="entity_ref_id" xsi:type="array">
+                            <item name="label" xsi:type="string">Ref ID</item>
+                            <item name="sort_order" xsi:type="number">60</item>
+                        </item>
+                        <item name="order_id" xsi:type="array">
+                            <item name="label" xsi:type="string">Order</item>
+                            <item name="sort_order" xsi:type="number">70</item>
+                        </item>
+                        <item name="before_state" xsi:type="array">
+                            <item name="label" xsi:type="string">Before</item>
+                            <item name="sort_order" xsi:type="number">80</item>
+                        </item>
+                        <item name="after_state" xsi:type="array">
+                            <item name="label" xsi:type="string">After</item>
+                            <item name="sort_order" xsi:type="number">90</item>
+                        </item>
+                        <item name="note" xsi:type="array">
+                            <item name="label" xsi:type="string">Note</item>
+                            <item name="sort_order" xsi:type="number">100</item>
+                        </item>
+                        <item name="admin_user_id" xsi:type="array">
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                    </argument>
+
+                    <argument name="searchable_fields" xsi:type="array">
+                        <item name="order_id" xsi:type="string">order_id</item>
+                        <item name="entity_ref_id" xsi:type="string">entity_ref_id</item>
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

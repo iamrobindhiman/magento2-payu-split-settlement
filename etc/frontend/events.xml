@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+
+    <!--
+        Hook 1 — captures the raw response payload from PayU before any controller
+        logic runs. The single most important data point for diagnosing #003.
+    -->
+    <event name="controller_action_predispatch_payu_standard_response">
+        <observer name="rkd_payu_diagnostic_response_predispatch"
+                  instance="RKD\PayuSplit\Diagnostic\Observer\ResponsePredispatch"/>
+    </event>
+
+    <!--
+        Hook 5 — confirms the controller exited cleanly. If Hook 1 fires but this
+        one doesn't, the upstream die-trap at Response.php:137 caught us. The absence
+        of the paired log line IS the diagnostic.
+    -->
+    <event name="controller_action_postdispatch_payu_standard_response">
+        <observer name="rkd_payu_diagnostic_response_postdispatch"
+                  instance="RKD\PayuSplit\Diagnostic\Observer\ResponsePostdispatch"/>
+    </event>
+
+</config>

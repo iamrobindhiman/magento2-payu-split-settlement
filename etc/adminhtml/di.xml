@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Loki generic write paths: inline edit + duplicate off everywhere; PayU form save/delete need manage ACL + known columns. -->
+    <type name="Loki\AdminComponents\Grid\Action\InlineEditAction">
+        <plugin name="fab_loki_write_guard" type="RKD\PayuSplit\Plugin\Loki\LokiWriteGuard"/>
+    </type>
+    <type name="Loki\AdminComponents\Form\Action\SaveAction">
+        <plugin name="fab_loki_write_guard" type="RKD\PayuSplit\Plugin\Loki\LokiWriteGuard"/>
+    </type>
+    <type name="Loki\AdminComponents\Form\Action\DeleteAction">
+        <plugin name="fab_loki_write_guard" type="RKD\PayuSplit\Plugin\Loki\LokiWriteGuard"/>
+    </type>
+    <type name="Loki\AdminComponents\Form\Action\DuplicateAction">
+        <plugin name="fab_loki_write_guard" type="RKD\PayuSplit\Plugin\Loki\LokiWriteGuard"/>
+    </type>
+    <!-- Loki's AJAX endpoint renders any handle the client names: require the page's own ACL,
+         checked on the layout Loki actually built. -->
+    <type name="Loki\Components\Util\Controller\LayoutLoader">
+        <plugin name="fab_loki_read_guard" type="RKD\PayuSplit\Plugin\Loki\LokiReadGuard"/>
+    </type>
+    <type name="RKD\PayuSplit\Plugin\Loki\LokiReadGuard">
+        <arguments>
+            <argument name="handleResources" xsi:type="array">
+                <item name="rkd_payu_submerchant_" xsi:type="string">RKD_PayuSplit::submerchants</item>
+                <item name="rkd_payu_settlement_" xsi:type="string">RKD_PayuSplit::settlements</item>
+                <item name="rkd_payu_audit_" xsi:type="string">RKD_PayuSplit::settlements</item>
+                <item name="rkd_payu_" xsi:type="string">RKD_PayuSplit::settlements</item>
+            </argument>
+            <!-- No open prefixes: loki_admin_components_grid/_form arrive by <update> and never show in
+                 getHandles(); the route's own default handle is a CUSTOMER grid (wave-9 security L-1). -->
+        </arguments>
+    </type>
+    <!-- The read boundary: every block on the built layout, by provider class and block name. -->
+    <type name="Loki\Components\Util\Controller\TargetRenderer">
+        <plugin name="fab_loki_block_guard" type="RKD\PayuSplit\Plugin\Loki\LokiBlockGuard"/>
+    </type>
+    <type name="Loki\Components\Util\Controller\RepositoryDispatcher">
+        <plugin name="fab_loki_block_guard" type="RKD\PayuSplit\Plugin\Loki\LokiBlockGuard"/>
+    </type>
+    <type name="RKD\PayuSplit\Plugin\Loki\LokiBlockGuard">
+        <arguments>
+            <argument name="providerResources" xsi:type="array">
+                <item name="RKD\PayuSplit\Split\Model\ResourceModel\Submerchant" xsi:type="string">RKD_PayuSplit::submerchants</item>
+                <item name="RKD\PayuSplit\" xsi:type="string">RKD_PayuSplit::settlements</item>
+            </argument>
+            <argument name="blockResources" xsi:type="array">
+                <item name="rkd-payu.submerchant-" xsi:type="string">RKD_PayuSplit::submerchants</item>
+                <item name="rkd-payu." xsi:type="string">RKD_PayuSplit::settlements</item>
+            </argument>
+        </arguments>
+    </type>
+    <!-- Loki's entity page skips admin authentication (not a backend Action): require a login and its ACL. -->
+    <type name="Loki\AdminComponents\Controller\Adminhtml\Index\Entity">
+        <plugin name="fab_loki_entity_page_guard" type="RKD\PayuSplit\Plugin\Loki\LokiEntityPageGuard"/>
+    </type>
+</config>

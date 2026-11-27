@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<components xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="urn:magento:module:Yireo_LokiComponents:etc/loki_components.xsd">
+    <component
+        name="rkd-payu.settlement-grid"
+        viewModel="RKD\PayuSplit\Split\Component\Grid\SettlementGridViewModel"
+        repository="Loki\AdminComponents\Component\Grid\GridRepository">
+    </component>
+    <component
+        name="rkd-payu.submerchant-grid"
+        viewModel="RKD\PayuSplit\Split\Component\Grid\SubmerchantGridViewModel"
+        repository="Loki\AdminComponents\Component\Grid\GridRepository">
+    </component>
+    <component
+        name="rkd-payu.submerchant-form"
+        viewModel="RKD\PayuSplit\Split\Component\Form\SubmerchantFormViewModel"
+        repository="Loki\AdminComponents\Component\Form\FormRepository">
+    </component>
+    <component
+        name="rkd-payu.audit-grid"
+        viewModel="RKD\PayuSplit\Split\Component\Grid\AuditGridViewModel"
+        repository="Loki\AdminComponents\Component\Grid\GridRepository">
+    </component>
+</components>

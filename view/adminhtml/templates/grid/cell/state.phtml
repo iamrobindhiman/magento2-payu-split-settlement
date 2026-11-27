@@ -1,0 +1,46 @@
+<?php
+/**
+ * Coloured badge for a rkd_payu_split_segment state in the A7 settlement grid.
+ *
+ * @var $block \Loki\AdminComponents\Block\Grid\Cell
+ * @var $escaper \Magento\Framework\Escaper
+ */
+
+$value = (string) $block->getValue();
+
+$labels = [
+    'PENDING' => __('Pending'),
+    'AWAITING_DELIVERY' => __('Awaiting Delivery'),
+    'IN_WINDOW' => __('In Return Window'),
+    'ELIGIBLE' => __('Eligible'),
+    'RELEASE_REQUESTED' => __('Release Requested'),
+    'RELEASED' => __('Released'),
+    'CANCELLED' => __('Cancelled'),
+    'REFUND_PENDING' => __('Refund Pending'),
+    'PARTIAL_REFUNDED' => __('Partially Refunded'),
+    'REFUNDED' => __('Refunded'),
+    'WRITTEN_OFF' => __('Written Off'),
+    'NOT_IN_SPLIT' => __('Not In Split'),
+];
+
+$classes = [
+    'PENDING' => 'grid-severity-notice',
+    'AWAITING_DELIVERY' => 'grid-severity-notice',
+    'IN_WINDOW' => 'grid-severity-notice',
+    'ELIGIBLE' => 'grid-severity-minor',
+    'RELEASE_REQUESTED' => 'grid-severity-minor',
+    'RELEASED' => 'grid-severity-notice',
+    'CANCELLED' => 'grid-severity-minor',
+    'REFUND_PENDING' => 'grid-severity-major',
+    'PARTIAL_REFUNDED' => 'grid-severity-major',
+    'REFUNDED' => 'grid-severity-minor',
+    'WRITTEN_OFF' => 'grid-severity-critical',
+    'NOT_IN_SPLIT' => 'grid-severity-critical',
+];
+
+$label = $labels[$value] ?? $value;
+$class = $classes[$value] ?? '';
+?>
+<span class="<?= $escaper->escapeHtmlAttr($class) ?>">
+    <span><?= $escaper->escapeHtml($label) ?></span>
+</span>
