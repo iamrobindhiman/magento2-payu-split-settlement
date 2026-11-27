@@ -41,8 +41,8 @@ class MoneyTest extends TestCase
     {
         $a = Money::fromPaise(90000);
         $b = Money::fromPaise(67932);
-        $this->assertSame(161928, $a->add($b)->paise);
-        $this->assertSame(18072, $a->subtract($b)->paise);
+        $this->assertSame(157932, $a->add($b)->paise);
+        $this->assertSame(22068, $a->subtract($b)->paise);
     }
 
     public function testIsNegative(): void
