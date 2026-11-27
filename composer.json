@@ -3,13 +3,36 @@
     "description": "Magento 2 split payment module for PayU India: per-vendor split settlement, refunds and release for Webkul Marketplace",
     "type": "magento2-module",
     "license": "MIT",
+    "keywords": [
+        "magento2",
+        "magento2-module",
+        "payu",
+        "payu-india",
+        "split-payment",
+        "split-settlement",
+        "marketplace",
+        "multi-vendor",
+        "webkul",
+        "payouts"
+    ],
+    "homepage": "https://github.com/iamrobindhiman/magento2-payu-split-settlement",
+    "authors": [
+        {
+            "name": "Robin Dhiman",
+            "homepage": "https://devrob.in"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "magento/framework": "*",
         "payuindia/payu": "^2.4"
     },
     "autoload": {
-        "files": ["registration.php"],
-        "psr-4": {"RKD\\PayuSplit\\": ""}
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "RKD\\PayuSplit\\": ""
+        }
     }
 }
