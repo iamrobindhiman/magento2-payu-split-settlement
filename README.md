@@ -46,18 +46,18 @@ Four stages: **calculator**, **trigger**, **refund**, **release**.
 
 ### Worked example (illustrative numbers)
 
-A customer pays Rs 1,000.00 for an order with items from vendor A (Rs 600.00) and vendor B (Rs 400.00). Assume a 10% marketplace commission.
+A customer pays Rs 1,000.00 for an order with items from vendor A (Rs 600.00) and vendor B (Rs 400.00). Assume a 15% marketplace commission (illustrative).
 
 | Segment | Owner | Amount |
 |---|---|---|
-| Vendor A | child merchant A | Rs 540.00 |
-| Vendor B | child merchant B | Rs 360.00 |
-| Commission | parent (seller id 0) | Rs 100.00 |
+| Vendor A | child merchant A | Rs 510.00 |
+| Vendor B | child merchant B | Rs 340.00 |
+| Commission | parent (seller id 0) | Rs 150.00 |
 | **Total** | | **Rs 1,000.00** |
 
 1. **Record.** When the payment is captured, the `sales_order_payment_pay` observer records the split plan: one segment per vendor plus the commission segment, in integer paise (`100000` here). Vendor amounts are a snapshot taken at payment and are never re-read live. Any sub-paise rounding residue lands on the parent segment, so the segments always sum to the payment exactly.
 2. **Trigger.** The `rkd_payu_split_trigger_scan` cron fires `payment_split` at the earliest of three triggers: `ALL_TERMINAL` (every vendor sub-order shipped or cancelled), `MONEY_EVENT` (a refund needs the split to exist first), or `CEILING` (a hard day limit after payment, default 25, with a log alert at 23).
-3. **Refund.** If vendor B cancels, `cancel_refund_transaction` is called with a `var8` parameter that names the child segment to debit plus the matching commission leg (here Rs 360.00 from B and Rs 40.00 from commission). One child-keyed `var8` queues two legs. Only the parent can refund a split transaction.
+3. **Refund.** If vendor B cancels, `cancel_refund_transaction` is called with a `var8` parameter that names the child segment to debit plus the matching commission leg (here Rs 340.00 from B and Rs 60.00 from commission). One child-keyed `var8` queues two legs. Only the parent can refund a split transaction.
 4. **Release.** `release_settlement` is called once per segment, and only when every item is delivered, every return window is closed, nothing is held, nothing is refund-pending, and the order's split is complete. The commission segment on the parent goes last, once every vendor segment is terminal. The amount PayU actually settled is read back before a segment is marked `RELEASED`; a mismatch freezes it.
 
 **Release is switched off by default** (`rkd_payu/split/release_enabled` = 0), because it is irreversible and has never been verified against a real settlement.
@@ -74,7 +74,7 @@ sequenceDiagram
     participant V as Vendors A and B
     C->>P: Pay Rs 1000 for one order
     P-->>M: Payment captured
-    M->>M: Record split plan in paise (A 540, B 360, commission 100)
+    M->>M: Record split plan in paise (A 510, B 340, commission 150)
     M->>P: payment_split after all vendors shipped or cancelled
     P-->>M: Split accepted (AGG-104 on repeat = success)
     opt Vendor B cancels

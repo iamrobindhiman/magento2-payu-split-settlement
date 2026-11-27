@@ -97,7 +97,7 @@ class Money
     }
 
     /**
-     * Two-decimal rupee string for the PayU payload (e.g. 71928 paise => "719.28").
+     * Two-decimal rupee string for the PayU payload (e.g. 67932 paise => "679.32").
      * Formatted from the integer paise directly so no float ever touches the output.
      *
      * @return string

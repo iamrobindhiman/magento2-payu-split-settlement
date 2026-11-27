@@ -16,7 +16,7 @@ class MoneyTest extends TestCase
     public function testFromRupeesParsesWholeAndDecimal(): void
     {
         $this->assertSame(90000, Money::fromRupees('900.0000')->paise);
-        $this->assertSame(71928, Money::fromRupees('719.28')->paise);
+        $this->assertSame(67932, Money::fromRupees('679.32')->paise);
         $this->assertSame(151840, Money::fromRupees('1518.40')->paise);
         $this->assertSame(0, Money::fromRupees('0')->paise);
         $this->assertSame(5, Money::fromRupees('0.05')->paise);
@@ -32,7 +32,7 @@ class MoneyTest extends TestCase
     public function testToRupeeStringAlwaysTwoDecimals(): void
     {
         $this->assertSame('900.00', Money::fromPaise(90000)->toRupeeString());
-        $this->assertSame('719.28', Money::fromPaise(71928)->toRupeeString());
+        $this->assertSame('679.32', Money::fromPaise(67932)->toRupeeString());
         $this->assertSame('0.05', Money::fromPaise(5)->toRupeeString());
         $this->assertSame('0.00', Money::zero()->toRupeeString());
     }
@@ -40,7 +40,7 @@ class MoneyTest extends TestCase
     public function testAddAndSubtract(): void
     {
         $a = Money::fromPaise(90000);
-        $b = Money::fromPaise(71928);
+        $b = Money::fromPaise(67932);
         $this->assertSame(161928, $a->add($b)->paise);
         $this->assertSame(18072, $a->subtract($b)->paise);
     }
